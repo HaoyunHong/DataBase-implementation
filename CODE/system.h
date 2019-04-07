@@ -12,4 +12,6 @@ class SYSTEM
   public:
 	DATABASE &operator[](const int &k);
 	std::vector<DATABASE> &get_database();
+	DATABASE &search_database(const std::string& s);
+	void show_databases();
 };
