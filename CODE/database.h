@@ -14,5 +14,7 @@ class DATABASE
 	TABLE &operator[](const int &k);
 	std::vector<TABLE> &get_table();
 	std::string& get_name();
+	TABLE &search_table(const std::string& s);
+	void show_tables();
 	DATABASE(std::string name);
 };
