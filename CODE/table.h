@@ -14,4 +14,6 @@ class TABLE
 	COLUMN *operator[](const int &k);
 	std::vector<COLUMN *> &get_column();
 	std::string& get_name();
+	COLUMN *search_column(std::string s);
+	TABLE(std::string s);
 };

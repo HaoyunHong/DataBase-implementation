@@ -6,3 +6,5 @@ TABLE &DATABASE::operator[](const int &k)
 }
 std::vector<TABLE> &DATABASE::get_table() { return m_table; }
 std::string &DATABASE::get_name() { return m_name; }
+
+DATABASE::DATABASE(std::string s):m_name(s){}
