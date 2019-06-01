@@ -1,3 +1,0 @@
-Field	Type	Null	Key	Default	Extra
-stu_id	int(11)	NO	PRI	NULL	
-stu_name	char(1)	YES		NULL	
