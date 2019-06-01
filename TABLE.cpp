@@ -133,7 +133,7 @@ void TABLE::Select(string name, string condition)
 		vector<int> outorder; //输出顺序
 		for (auto it = ColumnName.begin(); it < ColumnName.end(); ++it)
 		{
-			cout << *it << "  ";
+			cout << *it << "\t";
 		}
 		cout << endl;
 		for (int j = 0; j < RowNum; j++)
@@ -169,25 +169,25 @@ void TABLE::Select(string name, string condition)
 				{ //判断列的类型
 					auto tem = TableMap[ColumnName[i]];
 					if (tem->Get_IsNull(outorder[j]))
-						cout << "NULL ";
+						cout << "NULL\t";
 					else
-						cout << tem->Get_INT_Value(outorder[j]) << "  ";
+						cout << tem->Get_INT_Value(outorder[j]) << "\t";
 				}
 				else if (ColumnType[i] == _CHAR)
 				{
 					auto tem = TableMap[ColumnName[i]];
 					if (tem->Get_IsNull(outorder[j]))
-						cout << "NULL ";
+						cout << "NULL\t";
 					else
-						cout << tem->Get_CHAR_Value(outorder[j]) << " ";
+						cout << tem->Get_CHAR_Value(outorder[j]) << "\t";
 				}
 				else if (ColumnType[i] == _DOUBLE)
 				{
 					auto tem = TableMap[ColumnName[i]];
 					if (tem->Get_IsNull(outorder[j]))
-						cout << "NULL ";
+						cout << "NULL\t";
 					else
-						cout << fixed << setprecision(4) << tem->Get_DOUBLE_Value(outorder[j]) << " ";
+						cout << fixed << setprecision(4) << tem->Get_DOUBLE_Value(outorder[j]) << "\t";
 				}
 			}
 			cout << endl;
@@ -244,7 +244,7 @@ void TABLE::Select(string name, string condition)
 				for (int j = 0; j < outorder.size(); j++)
 				{
 					if (pc->Get_IsNull(outorder[j]))
-						cout << "NULL ";
+						cout << "NULL\t";
 					else
 						cout << pc->Get_INT_Value(outorder[j]) << endl;
 					;
@@ -255,7 +255,7 @@ void TABLE::Select(string name, string condition)
 				for (int j = 0; j < outorder.size(); j++)
 				{
 					if (pc->Get_IsNull(outorder[j]))
-						cout << "NULL ";
+						cout << "NULL\t";
 					else
 						cout << pc->Get_CHAR_Value(outorder[j]) << endl;
 					;
@@ -266,7 +266,7 @@ void TABLE::Select(string name, string condition)
 				for (int j = 0; j < outorder.size(); j++)
 				{
 					if (pc->Get_IsNull(outorder[j]))
-						cout << "NULL ";
+						cout << "NULL\t";
 					else
 						cout << pc->Get_DOUBLE_Value(outorder[j]) << endl;
 					;
@@ -425,46 +425,46 @@ void TABLE::SetKey(string keyname)
 
 void TABLE::showcolumns()
 { //打印各列信息
-	std::cout << "Field Type  Null  Key Default Extra\n";
+	std::cout << "Field\tType\tNull\tKey\tDefault\tExtra\n";
 	for (int i = 0; i < ColumnName.size(); i++)
 	{
 		auto pc = TableMap[ColumnName[i]];
-		std::cout << ColumnName[i] << " ";
+		std::cout << ColumnName[i] << "\t";
 		if (ColumnType[i] == _INT)
 		{
-			std::cout << "int(11) ";
+			std::cout << "int(11)\t";
 		}
 		else if (ColumnType[i] == _DOUBLE)
 		{
-			std::cout << "double ";
+			std::cout << "double\t";
 		}
 		else if (ColumnType[i] == _CHAR)
 		{
-			std::cout << "char(1) ";
+			std::cout << "char(1)\t";
 		}
 		if (pc->isNotNULL())
 		{
 			std::cout << "NO"
-					  << " ";
+					  << "\t";
 		}
 		else
 		{
 			std::cout << "YES"
-					  << " ";
+					  << "\t";
 		}
 		if (ColumnName[i] == KeyColumn)
 		{
 			std::cout << "PRI"
-					  << " ";
+					  << "\t";
 		}
 		if (pc->hasDefault() == false)
 		{
 			std::cout << "NULL"
-					  << " ";
+					  << "\t";
 		}
 		else
 		{
-			std::cout << pc->GetDefault() << " ";
+			std::cout << pc->GetDefault() << "\t";
 		}
 		std::cout << pc->GetExtra() << std::endl;
 	}
