@@ -1,0 +1,13 @@
+CREATE DATABASE OOP;
+USE OOP;
+CREATE TABLE poi(lkj INT, mnb INT, bvc INT, dfj CHAR, PRIMARY KEY(mnb));
+INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (1, 2, 3, "a");
+INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (2, 3, 4, "a");
+INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (3, 4, 5, "a");
+INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (4, 5, 6, "a");
+INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (5, 6, 7, "a");
+UPDATE poi SET dfj="b" WHERE lkj>3;
+SELECT dfj from poi;
+UPDATE poi SET dfj="b" WHERE lkj>3 OR mnb=2;
+SELECT dfj from poi;
+DROP DATABASE OOP;
