@@ -278,7 +278,7 @@ bool TABLE::MyCompare(int a, int b, string cname)
 }*/
 
 const std::vector<int> &TABLE::Select(const std::vector<std::string> &col_name, string condition)
-{ //主要接口
+{ //主要接口,其实这里col_name没有用到
 	//查找某些行并输出
 	static std::vector<int> outorder;
 	this->UpdateRow();
@@ -358,6 +358,13 @@ void TABLE::show_output_from_select(const std::vector<std::string> &col_name, co
 			cout << endl;
 		}
 	}
+	//在这里讨论如果“列名”是COUNT(expression)的情况
+	else if (col_name[0].substr(0, 6) == "COUNT(" && col_name[0][col_name[0].length() - 1] == ')')
+	{
+		cout << col_name[0] << endl;
+		string expression = col_name[0].substr(6, col_name[0].length() - 7);
+		cout << this->Count(expression) << "\t";
+	}
 	else
 	{
 		if (outorder.size() > 0)
@@ -371,6 +378,7 @@ void TABLE::show_output_from_select(const std::vector<std::string> &col_name, co
 			{
 				for (int p = 0; p < col_name.size(); p++)
 				{
+
 					auto pc = TableMap[col_name[p]];
 					auto type = GetType(col_name[p]);
 					if (type == _INT)
@@ -728,4 +736,22 @@ bool TABLE::Judge(string condition, int k)
 		if (Res[i] == true)
 			return true;
 	return false;
+}
+
+int TABLE::Count(string expression)
+{
+	this->UpdateRow();
+	int count = this->GetRowNum();
+	if (expression == "*")
+		return count;
+	else
+	{
+		COLUMN *p = this->GetColumn(expression);
+		for (int i = 0; i < this->GetRowNum(); i++)
+		{
+			if (p->Get_IsNull(i))
+				count--;
+		}
+	}
+	return count;
 }

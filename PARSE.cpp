@@ -397,12 +397,16 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		auto outorder = curTb->Select(ele2, condition);
 		curTb->show_output_from_select(outorder, ele2);
 	}*/
-	else if (ele1 == "SELECT") //SELECT COLNAME FROM TBNAME WHERE .....;//SELECT COLNAME INTO OUTPUTFILE FROM TBNAME WHERE
+	else if (ele1 == "SELECT") //SELECT COLNAME FROM TBNAME WHERE .....;
+	//SELECT COLNAME INTO OUTPUTFILE FROM TBNAME WHERE;
+	//SELECT COUNT(expression) from TBNAME; (这里如果出现COUNT就不会出现其他列名)
+	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name,...; (这里COUNT只能作用于GROUP的列）
+	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name,... ORDER BY COUNT(expression);
 	{
 		std::vector<std::string> col_name;
 		col_name.clear();
 		string ele2, ele2_upper;
-		int chk = 0;				 //1代表正常SELECT，2代表需要输出到文件（出现“INTO”），3代表。。。（Group by或者sort，大家自行添加）
+		int chk = 0;				 //1代表正常SELECT，2代表需要输出到文件（出现“INTO”）,3代表……
 		bool has_whereclause = true; //判断是否有whereclause语句
 		while (chk == 0)
 		{
@@ -452,21 +456,21 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			if (has_whereclause)
 			{
 				string condition_upper = "";
-				is >> condition;//先把后一个要么是where要么是group的串读进condition
+				is >> condition; //先把后一个要么是where要么是group的串读进condition
 				Transform(condition, condition_upper);
-				if (condition_upper == "WHERE")//如果是where，证明是一个输出的语句，按正常情况操作
+				if (condition_upper == "WHERE") //如果是where，证明是一个输出的语句，按正常情况操作
 				{
 					condition = "";
-					getline(is, condition, ';');//把whereclause读进condition进行后续操作
-					auto outorder = curTb->Select(col_name, condition);//处理，找到符合条件的行存入outorder静态vector
-					curTb->show_output_from_select(col_name, outorder);//把符合条件的每一行输出
+					getline(is, condition, ';');						//把whereclause读进condition进行后续操作
+					auto outorder = curTb->Select(col_name, condition); //处理，找到符合条件的行存入outorder静态vector
+					curTb->show_output_from_select(col_name, outorder); //把符合条件的每一行输出
 				}
-				else if(condition_upper == "GROUP")//如果读到了group，那么。。。。。。
+				else if (condition_upper == "GROUP") //如果读到了group，那么。。。。。。
 				{
 					//这部分交给你们了
 				}
 			}
-			else//没有whereclause，全部输出
+			else //没有whereclause，全部输出
 			{
 				auto outorder = curTb->Select(col_name, "true");
 				curTb->show_output_from_select(col_name, outorder);
