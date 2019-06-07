@@ -2,7 +2,7 @@
 
 using namespace std;
 
-inline void split(const string &s, vector<string> &sv, const char flag)
+inline void split(const string &s, vector<string> &sv, const char flag = ' ')
 {
 	sv.clear();
 	istringstream iss(s);
