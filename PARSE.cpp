@@ -363,7 +363,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 	else if (ele1 == "SELECT")
 	{
 		string ele2;
-		is >> ele2;
+		is >> ele2;//储存了列名
 		string ele3;
 		is >> ele3;
 		is >> ele3;
@@ -393,6 +393,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			is >> ele3;
 			getline(is, condition, ';');
 		}
-		curTb->Select(ele2, condition);
+		auto outorder = curTb->Select(ele2, condition);
+		curTb->show_output_from_select(outorder, ele2);
 	}
 }
