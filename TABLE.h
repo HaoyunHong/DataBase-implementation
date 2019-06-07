@@ -8,6 +8,7 @@ private:
    std::vector<DataType> ColumnType;    //各列的数据类型:{_INT,_DOUBLE,_CHAR}
    std::string KeyColumn = "";          //键值列的名字
    int RowNum = 0;                      //行数 可以当做键值列的长度吧
+   std::vector<int> classifier;         //在COUNT,GROUP命令中使用，为COUNT指定的列中的数据分类，数据一样即分类相同，分类从0开始
 public:
    std::map<std::string, COLUMN *> TableMap; //一个map：列名->列指针
 
@@ -23,7 +24,7 @@ public:
    void Update(std::string aname, char avalue, std::string condition);                           //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
    void Update(std::string aname, double avalue, std::string condition);                         //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
    const std::vector<int> &Select(std::string name, std::string condition);                      //查找符合条件语句(whereclause)的行，并将行下标储存在vector里面
-   void show_output_from_select(const std::vector<int>& outorder, std::string name);              //将查找到的符合条件语句的行按要求输出
+   void show_output_from_select(const std::vector<int> &outorder, std::string name);             //将查找到的符合条件语句的行按要求输出
    void Delete(std::string condition);                                                           //删除符合条件语句的行
    DataType GetType(std::string name);                                                           //获得行name的类型
    bool Judge(std::string condition, int k);                                                     //功能：接收whereclause语句，一个整数行标（从0到行数-1），输出bool,判断此行是否满足语句的条件

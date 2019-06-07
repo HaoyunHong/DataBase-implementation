@@ -2,7 +2,7 @@
 
 using namespace std;
 
-inline void split(const string &s, vector<string> &sv, const char flag = ' ')
+void split(const string &s, vector<string> &sv, const char flag)
 {
 	sv.clear();
 	istringstream iss(s);
@@ -279,10 +279,11 @@ bool TABLE::MyCompare(int a, int b, string cname)
 
 const std::vector<int> &TABLE::Select(string name, string condition)
 { //主要接口
-	//查找某些行并输出	
+	//查找某些行并输出
 	static std::vector<int> outorder;
 	this->UpdateRow();
-	if(RowNum == 0)return outorder;
+	if (RowNum == 0)
+		return outorder;
 	outorder.clear();
 	for (int j = 0; j < RowNum; j++)
 	{ //遍历所有行
@@ -314,8 +315,10 @@ const std::vector<int> &TABLE::Select(string name, string condition)
 void TABLE::show_output_from_select(const std::vector<int> &outorder, std::string name)
 {
 	this->UpdateRow();
-	if(RowNum == 0)return;
-	if(outorder.size() == 0)return;//如果不用输出，连表头都不需要打
+	if (RowNum == 0)
+		return;
+	if (outorder.size() == 0)
+		return; //如果不用输出，连表头都不需要打
 	if (name == "*")
 	{
 		for (int i = 0; i < ColumnName.size(); i++)
