@@ -8,6 +8,7 @@ private:
    std::vector<DataType> ColumnType;    //各列的数据类型:{_INT,_DOUBLE,_CHAR}
    std::string KeyColumn = "";          //键值列的名字
    int RowNum = 0;                      //行数 可以当做键值列的长度吧
+   std::vector<int> classifier;         //在COUNT,GROUP命令中使用，为COUNT指定的列中的数据分类，数据一样即分类相同，分类从0开始
 public:
    std::map<std::string, COLUMN *> TableMap; //一个map：列名->列指针
 
