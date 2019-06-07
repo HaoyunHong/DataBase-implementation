@@ -122,7 +122,7 @@ bool TABLE::MyCompare(int a, int b, string cname)
 	return false;
 }
 
-void TABLE::Select(string name, string condition)
+/*void TABLE::Select(string name, string condition)
 { //主要接口
 	//查找某些行并输出
 	this->UpdateRow();
@@ -144,7 +144,7 @@ void TABLE::Select(string name, string condition)
 			}
 		}
 		if (outorder.size() > 1)
-		{ //冒泡排序
+		{ //冒泡排序，按照主键顺序
 			for (int i = 0; i < (outorder.size() - 1); i++)
 			{
 				if (i >= (outorder.size() - 1))
@@ -275,6 +275,128 @@ void TABLE::Select(string name, string condition)
 		}
 	}
 	return;
+}*/
+
+const std::vector<int> &TABLE::Select(string name, string condition)
+{ //主要接口
+	//查找某些行并输出	
+	static std::vector<int> outorder;
+	this->UpdateRow();
+	if(RowNum == 0)return outorder;
+	outorder.clear();
+	for (int j = 0; j < RowNum; j++)
+	{ //遍历所有行
+		if (Judge(condition, j))
+		{ //如果满足
+			outorder.push_back(j);
+		}
+	}
+	if (outorder.size() > 1)
+	{ //冒泡排序
+		for (int i = 0; i < (outorder.size() - 1); i++)
+		{
+			if (i >= (outorder.size() - 1))
+				break;
+			for (int j = 0; j < (outorder.size() - 1 - i); j++)
+			{
+				if (this->MyCompare(outorder[j + 1], outorder[j], KeyColumn))
+				{
+					int tmp = outorder[j + 1];
+					outorder[j + 1] = outorder[j];
+					outorder[j] = tmp;
+				}
+			}
+		}
+	}
+	return outorder;
+}
+
+void TABLE::show_output_from_select(const std::vector<int> &outorder, std::string name)
+{
+	this->UpdateRow();
+	if(RowNum == 0)return;
+	if(outorder.size() == 0)return;//如果不用输出，连表头都不需要打
+	if (name == "*")
+	{
+		for (int i = 0; i < ColumnName.size(); i++)
+		{
+			std::cout << ColumnName[i] << "\t";
+		}
+		std::cout << std::endl;
+		for (int j = 0; j < outorder.size(); j++)
+		{ //遍历outorder
+			for (int i = 0; i < ColumnName.size(); i++)
+			{ //遍历所有列
+				if (ColumnType[i] == _INT)
+				{ //判断列的类型
+					auto tem = TableMap[ColumnName[i]];
+					if (tem->Get_IsNull(outorder[j]))
+						cout << "NULL\t";
+					else
+						cout << tem->Get_INT_Value(outorder[j]) << "\t";
+				}
+				else if (ColumnType[i] == _CHAR)
+				{
+					auto tem = TableMap[ColumnName[i]];
+					if (tem->Get_IsNull(outorder[j]))
+						cout << "NULL\t";
+					else
+						cout << tem->Get_CHAR_Value(outorder[j]) << "\t";
+				}
+				else if (ColumnType[i] == _DOUBLE)
+				{
+					auto tem = TableMap[ColumnName[i]];
+					if (tem->Get_IsNull(outorder[j]))
+						cout << "NULL\t";
+					else
+						cout << fixed << setprecision(4) << tem->Get_DOUBLE_Value(outorder[j]) << "\t";
+				}
+			}
+			cout << endl;
+		}
+	}
+	else
+	{
+		if (outorder.size() > 0)
+		{ //输出
+			cout << name << endl;
+			auto pc = TableMap[name];
+			auto type = GetType(name);
+			if (type == _INT)
+			{
+				for (int j = 0; j < outorder.size(); j++)
+				{
+					if (pc->Get_IsNull(outorder[j]))
+						cout << "NULL\t";
+					else
+						cout << pc->Get_INT_Value(outorder[j]) << endl;
+					;
+				}
+			}
+			else if (type == _CHAR)
+			{
+				for (int j = 0; j < outorder.size(); j++)
+				{
+					if (pc->Get_IsNull(outorder[j]))
+						cout << "NULL\t";
+					else
+						cout << pc->Get_CHAR_Value(outorder[j]) << endl;
+					;
+				}
+			}
+			else if (type == _DOUBLE)
+			{
+				for (int j = 0; j < outorder.size(); j++)
+				{
+					if (pc->Get_IsNull(outorder[j]))
+						cout << "NULL\t";
+					else
+						cout << pc->Get_DOUBLE_Value(outorder[j]) << endl;
+					;
+				}
+			}
+		}
+	}
 }
 
 void TABLE::Delete(string condition)
@@ -391,6 +513,7 @@ void TABLE::InsertNull(string cname, DataType type)
 			}
 		}
 	}
+	//对NULL的处理是对于每一个数据单元格都设置属性为NULL
 }
 
 void TABLE::addcolumn(std::string clname, DataType ctype)
