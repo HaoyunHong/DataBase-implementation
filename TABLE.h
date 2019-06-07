@@ -22,8 +22,8 @@ public:
    void Update(std::string aname, int avalue, std::string condition);                            //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
    void Update(std::string aname, char avalue, std::string condition);                           //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
    void Update(std::string aname, double avalue, std::string condition);                         //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
-   const std::vector<int> &Select(std::string name, std::string condition);                      //查找符合条件语句(whereclause)的行，并将行下标储存在vector里面
-   void show_output_from_select(const std::vector<int>& outorder, std::string name);              //将查找到的符合条件语句的行按要求输出
+   const std::vector<int> &Select(const std::vector<std::string>& col_name, std::string condition);                      //查找符合条件语句(whereclause)的行，并将行下标储存在vector里面
+   void show_output_from_select(const std::vector<std::string>& col_name, const std::vector<int>& outorder);              //将查找到的符合条件语句的行按要求输出
    void Delete(std::string condition);                                                           //删除符合条件语句的行
    DataType GetType(std::string name);                                                           //获得行name的类型
    bool Judge(std::string condition, int k);                                                     //功能：接收whereclause语句，一个整数行标（从0到行数-1），输出bool,判断此行是否满足语句的条件

@@ -360,13 +360,14 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			curTb->Update(mclname, val, condition);
 		}
 	}
-	else if (ele1 == "SELECT")
+	/*
+	else if (ele1 == "SELECT")//SELECT COLNAME FROM TBNAME WHERE .....;
 	{
 		string ele2;
 		is >> ele2;//储存了列名
 		string ele3;
-		is >> ele3;
-		is >> ele3;
+		is >> ele3;//FROM
+		is >> ele3;//TBNAME
 		bool end = false; //判断是否有whereclause语句
 		for (int j = 0; ele3[j]; j++)
 		{
@@ -386,14 +387,94 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			}
 			if (it == curDb->DataBaseMap.end())
 				cout << "CAN NOT FIND TABLENAME" << ele3 << endl;
-		}
+		}//利用ele3里面的TBNAME找对应表的指针
 		string condition = "true"; //condition缺省为“true”，供无whereclause语句时使用
 		if (!end)
 		{
 			is >> ele3;
 			getline(is, condition, ';');
-		}
+		}//如果有whereclause，用ele3储存"WHERE",condition储存whereclause句子
 		auto outorder = curTb->Select(ele2, condition);
 		curTb->show_output_from_select(outorder, ele2);
+	}*/
+	else if (ele1 == "SELECT") //SELECT COLNAME FROM TBNAME WHERE .....;//SELECT COLNAME INTO OUTPUTFILE FROM TBNAME WHERE
+	{
+		std::vector<std::string> col_name;
+		col_name.clear();
+		string ele2, ele2_upper;
+		int chk = 0;				 //1代表正常SELECT，2代表需要输出到文件（出现“INTO”），3代表。。。（Group by或者sort，大家自行添加）
+		bool has_whereclause = true; //判断是否有whereclause语句
+		while (chk == 0)
+		{
+			is >> ele2;
+			if (ele2[ele2.length() - 1] == ',')
+			{
+				ele2 = ele2.substr(0, ele2.length() - 1);
+			} //如果是逗号，去掉
+			ele2_upper = "";
+			Transform(ele2, ele2_upper);
+			if (ele2_upper == "FROM")
+			{
+				chk = 1;
+				break;
+			}
+			if (ele2_upper == "INTO")
+			{
+				chk = 2;
+				break;
+			}
+			else //正在读入的还是一个列名
+			{
+				col_name.push_back(ele2);
+			}
+		}
+		//现在有两种情况：第一种：读到了FROM，没有INTO，第二种，读到了INTO，FROM还在后面
+		if (chk == 1) //第一种情况，读到了FROM，证明没有INTO
+		{
+			string tbname;
+			is >> tbname;
+			if (tbname[tbname.length() - 1] == ';') //表名后直接是分号，代表没有whereclause
+			{
+				has_whereclause = false;
+				tbname = tbname.substr(0, tbname.length() - 1);
+			}
+			for (auto it = curDb->DataBaseMap.begin(); it != curDb->DataBaseMap.end(); it++)
+			{
+				if (it->first == tbname)
+				{
+					curTb = it->second;
+					break;
+				}
+				if (it == curDb->DataBaseMap.end())
+					cout << "CAN NOT FIND TABLENAME" << tbname << endl;
+			}						   //利用ele3里面的TBNAME找对应表的指针
+			string condition = "true"; //condition缺省为“true”，供无whereclause语句时使用
+			if (has_whereclause)
+			{
+				string condition_upper = "";
+				is >> condition;//先把后一个要么是where要么是group的串读进condition
+				Transform(condition, condition_upper);
+				if (condition_upper == "WHERE")//如果是where，证明是一个输出的语句，按正常情况操作
+				{
+					condition = "";
+					getline(is, condition, ';');//把whereclause读进condition进行后续操作
+					auto outorder = curTb->Select(col_name, condition);//处理，找到符合条件的行存入outorder静态vector
+					curTb->show_output_from_select(col_name, outorder);//把符合条件的每一行输出
+				}
+				else if(condition_upper == "GROUP")//如果读到了group，那么。。。。。。
+				{
+					//这部分交给你们了
+				}
+			}
+			else//没有whereclause，全部输出
+			{
+				auto outorder = curTb->Select(col_name, "true");
+				curTb->show_output_from_select(col_name, outorder);
+			}
+		}
+		else if (chk == 2)
+		{
+			//这部分写输出到文件
+		}
 	}
 }

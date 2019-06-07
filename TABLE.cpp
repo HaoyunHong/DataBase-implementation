@@ -2,7 +2,7 @@
 
 using namespace std;
 
-inline void split(const string &s, vector<string> &sv, const char flag = ' ')
+inline void split(const string &s, vector<string> &sv, const char flag)
 {
 	sv.clear();
 	istringstream iss(s);
@@ -277,12 +277,13 @@ bool TABLE::MyCompare(int a, int b, string cname)
 	return;
 }*/
 
-const std::vector<int> &TABLE::Select(string name, string condition)
+const std::vector<int> &TABLE::Select(const std::vector<std::string> &col_name, string condition)
 { //主要接口
-	//查找某些行并输出	
+	//查找某些行并输出
 	static std::vector<int> outorder;
 	this->UpdateRow();
-	if(RowNum == 0)return outorder;
+	if (RowNum == 0)
+		return outorder;
 	outorder.clear();
 	for (int j = 0; j < RowNum; j++)
 	{ //遍历所有行
@@ -311,12 +312,14 @@ const std::vector<int> &TABLE::Select(string name, string condition)
 	return outorder;
 }
 
-void TABLE::show_output_from_select(const std::vector<int> &outorder, std::string name)
+void TABLE::show_output_from_select(const std::vector<std::string> &col_name, const std::vector<int> &outorder)
 {
 	this->UpdateRow();
-	if(RowNum == 0)return;
-	if(outorder.size() == 0)return;//如果不用输出，连表头都不需要打
-	if (name == "*")
+	if (RowNum == 0)
+		return;
+	if (outorder.size() == 0)
+		return; //如果不用输出，连表头都不需要打
+	if (col_name[0] == "*")
 	{
 		for (int i = 0; i < ColumnName.size(); i++)
 		{
@@ -359,41 +362,43 @@ void TABLE::show_output_from_select(const std::vector<int> &outorder, std::strin
 	{
 		if (outorder.size() > 0)
 		{ //输出
-			cout << name << endl;
-			auto pc = TableMap[name];
-			auto type = GetType(name);
-			if (type == _INT)
+			for (int p = 0; p < col_name.size(); p++)
 			{
-				for (int j = 0; j < outorder.size(); j++)
-				{
-					if (pc->Get_IsNull(outorder[j]))
-						cout << "NULL\t";
-					else
-						cout << pc->Get_INT_Value(outorder[j]) << endl;
-					;
-				}
+				cout << col_name[p] << "\t";
 			}
-			else if (type == _CHAR)
+			cout << endl;
+			for (int j = 0; j < outorder.size(); j++)
 			{
-				for (int j = 0; j < outorder.size(); j++)
+				for (int p = 0; p < col_name.size(); p++)
 				{
-					if (pc->Get_IsNull(outorder[j]))
-						cout << "NULL\t";
-					else
-						cout << pc->Get_CHAR_Value(outorder[j]) << endl;
-					;
+					auto pc = TableMap[col_name[p]];
+					auto type = GetType(col_name[p]);
+					if (type == _INT)
+					{
+						if (pc->Get_IsNull(outorder[j]))
+							cout << "NULL\t";
+						else
+							cout << pc->Get_INT_Value(outorder[j]) << "\t";
+						;
+					}
+					else if (type == _CHAR)
+					{
+						if (pc->Get_IsNull(outorder[j]))
+							cout << "NULL\t";
+						else
+							cout << pc->Get_CHAR_Value(outorder[j]) << "\t";
+						;
+					}
+					else if (type == _DOUBLE)
+					{
+						if (pc->Get_IsNull(outorder[j]))
+							cout << "NULL\t";
+						else
+							cout << pc->Get_DOUBLE_Value(outorder[j]) << "\t";
+						;
+					}
 				}
-			}
-			else if (type == _DOUBLE)
-			{
-				for (int j = 0; j < outorder.size(); j++)
-				{
-					if (pc->Get_IsNull(outorder[j]))
-						cout << "NULL\t";
-					else
-						cout << pc->Get_DOUBLE_Value(outorder[j]) << endl;
-					;
-				}
+				cout << endl;
 			}
 		}
 	}
