@@ -44,4 +44,9 @@ public:
                 delete *it;
         }
     }
+
+    //以下三个函数返回派生类对象指针
+    INT *Get_INT_Data(int k);
+    DOUBLE *Get_DOUBLE_Data(int k);
+    CHAR *Get_CHAR_Data(int k);
 };

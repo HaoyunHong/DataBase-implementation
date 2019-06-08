@@ -45,9 +45,9 @@ bool INT::operator==(INT &b)
 		else
 			return false;
 	}
-	else if (this->isNull() == true && b.isNull() == true)
+	else if (this->isNull() == true || b.isNull() == true)
 	{
-		return true;
+		return false;
 	}
 	return false;
 }
@@ -108,9 +108,9 @@ bool DOUBLE::operator==(DOUBLE &b)
 		else
 			return false;
 	}
-	else if (this->isNull() == true && b.isNull() == true)
+	else if (this->isNull() == true || b.isNull() == true)
 	{
-		return true;
+		return false;
 	}
 	return false;
 }
@@ -171,9 +171,9 @@ bool CHAR::operator==(CHAR &b)
 		else
 			return false;
 	}
-	else if (this->isNull() == true && b.isNull() == true)
+	else if (this->isNull() == true || b.isNull() == true)
 	{
-		return true;
+		return false;
 	}
 	return false;
 }

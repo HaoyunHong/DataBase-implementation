@@ -44,6 +44,8 @@ public:
     void UnsetNull(); //设置为不是NULL
 };
 
+//进行重要修改！！！NULL 值与任何其它值的比较（即使是 NULL）永远返回 false，即 NULL = NULL 返回false
+
 class INT : public DATA
 { //INT类（DATA派生类）
 private:

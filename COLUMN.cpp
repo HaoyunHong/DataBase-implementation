@@ -133,3 +133,18 @@ string COLUMN::GetExtra()
 {
 	return extra;
 }
+
+INT *COLUMN::Get_INT_Data(int k)
+{
+	return dynamic_cast<INT *>(ColumnData[k]);
+}
+
+DOUBLE *COLUMN::Get_DOUBLE_Data(int k)
+{
+	return dynamic_cast<DOUBLE *>(ColumnData[k]);
+}
+
+CHAR *COLUMN::Get_CHAR_Data(int k)
+{
+	return dynamic_cast<CHAR *>(ColumnData[k]);
+}

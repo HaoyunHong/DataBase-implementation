@@ -397,17 +397,18 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		auto outorder = curTb->Select(ele2, condition);
 		curTb->show_output_from_select(outorder, ele2);
 	}*/
-	else if (ele1 == "SELECT") //SELECT COLNAME FROM TBNAME WHERE .....;
-	//SELECT COLNAME INTO OUTPUTFILE FROM TBNAME WHERE;
-	//SELECT COUNT(expression) from TBNAME; (这里如果出现COUNT就不会出现其他列名)
-	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name,...; (这里COUNT只能作用于GROUP的列）
-	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name,... ORDER BY COUNT(expression);
+	else if (ele1 == "SELECT")
+	//SELECT COLNAME FROM TBNAME WHERE ...;
+	//SELECT COLNAME INTO OUTPUTFILE FROM TBNAME WHERE ...;
+	//SELECT COUNT(expression) from TBNAME; (这里如果出现COUNT就不会出现其他列名,和第一种情况一起处理)
+	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name, ...; (这里SELECT,COUNT只能作用于GROUP的列）
+	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name, ... ORDER BY ...; (这里ORDER只能作用于GROUP的列或者COUNT）
 	{
 		std::vector<std::string> col_name;
 		col_name.clear();
 		string ele2, ele2_upper;
 		int chk = 0;				 //1代表正常SELECT，2代表需要输出到文件（出现“INTO”）,3代表……
-		bool has_whereclause = true; //判断是否有whereclause语句
+		bool has_whereclause = true; //判断是否有whereclause语句（现在含义扩大，含有GROUP也将算入）
 		while (chk == 0)
 		{
 			is >> ele2;
@@ -465,9 +466,37 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 					auto outorder = curTb->Select(col_name, condition); //处理，找到符合条件的行存入outorder静态vector
 					curTb->show_output_from_select(col_name, outorder); //把符合条件的每一行输出
 				}
-				else if (condition_upper == "GROUP") //如果读到了group，那么。。。。。。
+				else if (condition_upper == "GROUP") //如果读到了group
 				{
-					//这部分交给你们了
+					is >> condition;		  //读入by,接下来是GROUP要作用的列名
+					vector<string> group_col; //储存GROUP作用的列名
+					bool has_order = true;	//是否含有ORDER语句
+					string _group;
+					is >> _group;
+					while (_group[_group.length() - 1] == ',')
+					{
+						group_col.push_back(_group.substr(0, _group.length() - 1));
+						is >> _group;
+					}
+					if (_group[_group.length() - 1] == ';') //如果直接分号结束，说明没有ORDER语句
+					{
+						has_order = false;
+						group_col.push_back(_group.substr(0, _group.length() - 1));
+					}
+					else
+						group_col.push_back(_group);
+					curTb->classify(group_col);
+
+					if (has_order) //如果有ORDER
+					{
+					}
+					else
+					{
+						for (int i = 0; i < col_name.size(); i++)
+							cout << col_name[i] << "\t";
+						cout << endl;
+						curTb->Select_Group(col_name);
+					}
 				}
 			}
 			else //没有whereclause，全部输出

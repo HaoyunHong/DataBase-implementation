@@ -358,7 +358,7 @@ void TABLE::show_output_from_select(const std::vector<std::string> &col_name, co
 			cout << endl;
 		}
 	}
-	//在这里讨论如果“列名”是COUNT(expression)的情况
+	//在这里讨论如果“列名”是COUNT(expression)的情况,已知不会有WHERE语句
 	else if (col_name[0].substr(0, 6) == "COUNT(" && col_name[0][col_name[0].length() - 1] == ')')
 	{
 		cout << col_name[0] << endl;
@@ -387,7 +387,6 @@ void TABLE::show_output_from_select(const std::vector<std::string> &col_name, co
 							cout << "NULL\t";
 						else
 							cout << pc->Get_INT_Value(outorder[j]) << "\t";
-						;
 					}
 					else if (type == _CHAR)
 					{
@@ -395,7 +394,6 @@ void TABLE::show_output_from_select(const std::vector<std::string> &col_name, co
 							cout << "NULL\t";
 						else
 							cout << pc->Get_CHAR_Value(outorder[j]) << "\t";
-						;
 					}
 					else if (type == _DOUBLE)
 					{
@@ -403,7 +401,6 @@ void TABLE::show_output_from_select(const std::vector<std::string> &col_name, co
 							cout << "NULL\t";
 						else
 							cout << pc->Get_DOUBLE_Value(outorder[j]) << "\t";
-						;
 					}
 				}
 				cout << endl;
@@ -754,4 +751,124 @@ int TABLE::Count(string expression)
 		}
 	}
 	return count;
+}
+
+void TABLE::classify(const vector<string> &group_col)
+{
+	classifier.clear();
+	num_of_each_kind.clear();
+	kind = 0;
+	classifier.push_back(kind);
+	num_of_each_kind.push_back(1);
+	this->UpdateRow();
+	for (int i = 1; i < this->GetRowNum(); i++) //每次判断第i行的数据是否可以与之前的行归为一组
+	{
+		int j = 0;
+		for (; j < i; j++) //遍历第i行之前的每一行
+		{
+			bool same = true;
+			for (int k = 0; k < group_col.size(); k++) //遍历需要比较的每一列
+			{
+				COLUMN *pcol = this->GetColumn(group_col[k]);
+				switch (this->GetType(group_col[k]))
+				{
+				case _INT:
+					if (*(pcol->Get_INT_Data(i)) != *(pcol->Get_INT_Data(j)))
+						same = false;
+					break;
+				case _DOUBLE:
+					if (*(pcol->Get_DOUBLE_Data(i)) != *(pcol->Get_DOUBLE_Data(j)))
+						same = false;
+					break;
+				case _CHAR:
+					if (*(pcol->Get_CHAR_Data(i)) != *(pcol->Get_CHAR_Data(j)))
+						same = false;
+					break;
+				}
+				if (same == false)
+					break;
+			}
+			if (same)
+			{
+				classifier.push_back(classifier[j]);
+				num_of_each_kind[classifier[j]]++;
+				break;
+			}
+		}
+		if (j == i)
+		{
+			kind++;
+			classifier.push_back(kind);
+			num_of_each_kind.push_back(1);
+		}
+	}
+}
+
+void TABLE::Select_Group(const std::vector<std::string> &col_name)
+{
+	/*for (int i = 0; i < classifier.size(); i++)
+		cout << classifier[i] << ' ';
+	cout << endl;
+	for (int i = 0; i <= kind; i++)
+		cout << num_of_each_kind[i] << ' ';
+	cout << endl;*/
+	
+	for (int i = 0; i <= kind; i++) //以种为一行输出
+	{
+		for (int j = 0; j < this->GetRowNum(); j++) //找到属于那一种的某一行
+		{
+			bool flag = false;
+			if (classifier[j] == i)
+			{
+				flag = true;
+				for (int p = 0; p < col_name.size(); p++) //遍历需要输出的列名
+				{
+					if (col_name[p].substr(0, 6) == "COUNT(" && col_name[p][col_name[p].length() - 1] == ')')
+					{
+						string expression = col_name[p].substr(6, col_name[p].length() - 7);
+						int count = num_of_each_kind[i];
+						if (expression != "*")
+						{
+							COLUMN *p = this->GetColumn(expression);
+							for (int k = 0; k < this->GetRowNum(); k++)
+							{
+								if (p->Get_IsNull(k) && classifier[k] == i)
+									count--;
+							}
+						}
+						cout << count << "\t";
+					}
+					else
+					{
+						auto pc = TableMap[col_name[p]];
+						auto type = GetType(col_name[p]);
+						if (type == _INT)
+						{
+							if (pc->Get_IsNull(j))
+								cout << "NULL\t";
+							else
+								cout << pc->Get_INT_Value(j) << "\t";
+						}
+						else if (type == _CHAR)
+						{
+							if (pc->Get_IsNull(j))
+								cout << "NULL\t";
+							else
+								cout << pc->Get_CHAR_Value(j) << "\t";
+						}
+						else if (type == _DOUBLE)
+						{
+							if (pc->Get_IsNull(j))
+								cout << "NULL\t";
+							else
+								cout << pc->Get_DOUBLE_Value(j) << "\t";
+						}
+					}
+				}
+				if (flag)
+					break;
+			}
+		}
+		cout << endl;
+	}
 }
