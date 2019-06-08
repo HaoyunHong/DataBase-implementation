@@ -1,5 +1,5 @@
 #include "TABLE.h"
-
+#include <fstream>
 using namespace std;
 
 void split(const string &s, vector<string> &sv, const char flag)
@@ -812,7 +812,7 @@ void TABLE::Select_Group(const std::vector<std::string> &col_name)
 	for (int i = 0; i <= kind; i++)
 		cout << num_of_each_kind[i] << ' ';
 	cout << endl;*/
-	
+
 	for (int i = 0; i <= kind; i++) //以种为一行输出
 	{
 		for (int j = 0; j < this->GetRowNum(); j++) //找到属于那一种的某一行
@@ -871,4 +871,192 @@ void TABLE::Select_Group(const std::vector<std::string> &col_name)
 		}
 		cout << endl;
 	}
+}
+
+void TABLE::write_into_outfile(const std::string &out_file_name, const std::vector<int> &outorder, const std::vector<std::string> &col_name)
+{
+	ofstream fout;
+	fout.open(out_file_name);
+	this->UpdateRow();
+	if (RowNum == 0)
+		return;
+	if (outorder.size() == 0)
+		return; //如果不用输出，连表头都不需要打
+	if (col_name[0] == "*")
+	{
+		/*
+		for (int i = 0; i < ColumnName.size(); i++)
+		{
+			std::cout << ColumnName[i] << "\t";
+		}
+		std::cout << std::endl;
+		*/
+		//文件输出不需要打表头
+		for (int j = 0; j < outorder.size(); j++)
+		{ //遍历outorder
+			for (int i = 0; i < ColumnName.size(); i++)
+			{ //遍历所有列
+				if (ColumnType[i] == _INT)
+				{ //判断列的类型
+					auto tem = TableMap[ColumnName[i]];
+					if (tem->Get_IsNull(outorder[j]))
+						fout << "NULL\t";
+					else
+						fout << tem->Get_INT_Value(outorder[j]) << "\t";
+				}
+				else if (ColumnType[i] == _CHAR)
+				{
+					auto tem = TableMap[ColumnName[i]];
+					if (tem->Get_IsNull(outorder[j]))
+						fout << "NULL\t";
+					else
+						fout << tem->Get_CHAR_Value(outorder[j]) << "\t";
+				}
+				else if (ColumnType[i] == _DOUBLE)
+				{
+					auto tem = TableMap[ColumnName[i]];
+					if (tem->Get_IsNull(outorder[j]))
+						fout << "NULL\t";
+					else
+						fout << fixed << setprecision(4) << tem->Get_DOUBLE_Value(outorder[j]) << "\t";
+				}
+			}
+			fout << '\n';
+		}
+	}
+	//在这里讨论如果“列名”是COUNT(expression)的情况,已知不会有WHERE语句
+	/*
+	else if (col_name[0].substr(0, 6) == "COUNT(" && col_name[0][col_name[0].length() - 1] == ')')
+	{
+		cout << col_name[0] << endl;
+		string expression = col_name[0].substr(6, col_name[0].length() - 7);
+		cout << this->Count(expression) << "\t";
+	}
+	*/
+	//同样的这一部分也不需要了
+	else
+	{
+		if (outorder.size() > 0)
+		{ //输出
+			/* 
+			for (int p = 0; p < col_name.size(); p++)
+			{
+				cout << col_name[p] << "\t";
+			}
+			cout << endl;
+			*/
+			//不需要输出列名了
+
+			for (int j = 0; j < outorder.size(); j++)
+			{
+				for (int p = 0; p < col_name.size(); p++)
+				{
+
+					auto pc = TableMap[col_name[p]];
+					auto type = GetType(col_name[p]);
+					if (type == _INT)
+					{
+						if (pc->Get_IsNull(outorder[j]))
+							fout << "NULL\t";
+						else
+							fout << pc->Get_INT_Value(outorder[j]) << "\t";
+					}
+					else if (type == _CHAR)
+					{
+						if (pc->Get_IsNull(outorder[j]))
+							fout << "NULL\t";
+						else
+							fout << pc->Get_CHAR_Value(outorder[j]) << "\t";
+					}
+					else if (type == _DOUBLE)
+					{
+						if (pc->Get_IsNull(outorder[j]))
+							fout << "NULL\t";
+						else
+							fout << pc->Get_DOUBLE_Value(outorder[j]) << "\t";
+					}
+				}
+				fout << '\n';
+			}
+		}
+	}
+	fout.close();
+}
+
+void TABLE::load_data_from_file(const std::string &in_file_name, const std::vector<std::string> &col_name)
+{
+	ifstream fin;
+	fin.open(in_file_name, ios::binary);
+	if (!fin)
+	{
+		cout << "ERROR! No such file or directory." << endl;
+		return;
+	}
+	int col_number = col_name.size();
+	if (col_number == 0)
+	{
+		cout << "ERROR! No elected columns." << endl;
+		return;
+	}
+	if (fin.peek() == EOF)
+	{
+		cout << "ERROR! File is empty." << endl;
+		return;
+	}
+	char ch;
+	string content0, line0;
+
+	while (!fin.eof())
+	{
+		getline(fin, line0);
+		istringstream line(line0);
+		for (int i = 0; i < col_name.size(); i++)
+		{
+			content0 = "";
+			line >> content0;
+			istringstream content(content0);
+			if (GetType(col_name[i]) == _INT)
+			{
+				if (content0 == "NULL")
+				{
+					TableMap[col_name[i]]->push_back_null(0);
+				}
+				else
+				{
+					int k;
+					content >> k;
+					TableMap[col_name[i]]->push_back(k);
+				}
+			}
+			else if (GetType(col_name[i]) == _DOUBLE)
+			{
+				if (content0 == "NULL")
+				{
+					TableMap[col_name[i]]->push_back_null(0.0);
+				}
+				else
+				{
+					double k;
+					content >> k;
+					TableMap[col_name[i]]->push_back(k);
+				}
+			}
+			else if (GetType(col_name[i]) == _CHAR)
+			{
+				if (content0 == "NULL")
+				{
+					TableMap[col_name[i]]->push_back_null('\0');
+				}
+				else
+				{
+					char k;
+					content >> k;
+					TableMap[col_name[i]]->push_back(k);
+				}
+			}
+		}
+		if(fin.peek() == EOF)break;
+	}
+	fin.close();
+	return;
 }

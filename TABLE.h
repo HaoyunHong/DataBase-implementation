@@ -54,6 +54,8 @@ public:
 	int Count(std::string expression);						  //实现COUNT语句,返回一个int
 	void classify(const std::vector<std::string> &group_col); //实现对选中分类，在GROUP语句中使用
 	void Select_Group(const std::vector<std::string> &col_name);
+	void write_into_outfile(const std::string& out_file_name, const std::vector<int>& outorder, const std::vector<std::string>& col_name);//输出到目标文件
+	void load_data_from_file(const std::string& in_file_name, const std::vector<std::string>& col_name);
 };
 
 inline void split(const std::string &s, std::vector<std::string> &sv, const char flag = ' '); //分割字符串

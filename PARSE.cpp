@@ -1,5 +1,4 @@
 #include "PARSE.h"
-
 using namespace std;
 
 DataType PARSE::attype(std::string type) //获得数据类型
@@ -452,7 +451,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				}
 				if (it == curDb->DataBaseMap.end())
 					cout << "CAN NOT FIND TABLENAME" << tbname << endl;
-			}						   //利用ele3里面的TBNAME找对应表的指针
+			}						   //利用ele3里面的TBNAME找对应表的指针,其实有函数可以用hhh
 			string condition = "true"; //condition缺省为“true”，供无whereclause语句时使用
 			if (has_whereclause)
 			{
@@ -505,9 +504,126 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				curTb->show_output_from_select(col_name, outorder);
 			}
 		}
-		else if (chk == 2)
+		else if (chk == 2) //SELECT * INTO OUTFILE 'output_file' FROM oop_info WHERE whereclause;
 		{
-			//这部分写输出到文件
+			string ele0, out_file_name, tbname;
+			string condition = "true";//模仿上面的操作，缺省值供没有whereclause时使用
+			bool has_whereclause = true;//指示是否存在whereclause
+			is >> ele0; //输入"OUTFILE"
+			is >> out_file_name;//输出文件名
+			if (out_file_name[0] == '\'' || out_file_name[0] == '\"')
+				out_file_name = out_file_name.substr(1, out_file_name.length() - 1);
+			if (out_file_name[out_file_name.length() - 1] == '\'' || out_file_name[out_file_name.length() - 1] == '\"')
+				out_file_name = out_file_name.substr(0, out_file_name.length() - 1); //去掉引号
+			is >> ele0;//输入"FROM"
+			is >> tbname;//表名
+			if(tbname[tbname.length() - 1] == ';')
+			{
+				tbname = tbname.substr(0, tbname.length() - 1);
+				has_whereclause = false;
+			}//没有whereclause，输出全部行
+			curTb = curDb->GetTable(tbname); //切换当前表
+			if(has_whereclause)
+			{
+				is >> ele0;//输入"WHERE"
+				condition = "";
+				getline(is, condition, ';');//读入condition
+			}
+			auto outorder = curTb->Select(col_name, condition);//outorder储存了需要输出的行的下标
+			curTb->write_into_outfile(out_file_name, outorder, col_name);
 		}
+	}
+
+	else if(ele1 == "LOAD")//LOAD DATA INFILE 'dump.txt' INTO TABLE mytbl(b, c, a);
+	{
+		string ele0, ele0_upper, file_name, tbname, colname;
+		is >> ele0;//"DATA"
+		ele0_upper = "";
+ 		Transform(ele0, ele0_upper);
+		if(ele0_upper != "DATA")
+		{
+			cout << ele0_upper << endl;
+			cout << "invalid command :: expect \"DATA\" here but not found.";
+			return;
+		}
+		is >> ele0;//"INFILE"
+		ele0_upper = "";
+		Transform(ele0, ele0_upper);
+		if(ele0_upper == "LOCAL")
+		{
+			is >> ele0;
+			ele0_upper = "";
+			Transform(ele0, ele0_upper);
+		}
+		if(ele0_upper != "INFILE")
+		{
+			cout << "invalid command :: expect \"INFILE\" here but not found." << endl;
+			return;
+		}
+		is >> file_name;
+		if(file_name[0] == '\'' || file_name[0] == '\"')
+		{
+			file_name = file_name.substr(1, file_name.length() - 1);
+		}
+		if(file_name[file_name.length() - 1] == '\'' || file_name[file_name.length() - 1] == '\"')
+		{
+			file_name = file_name.substr(0, file_name.length() - 1);
+		}//去掉引号
+		is >> ele0;//"INTO"
+		ele0_upper = "";
+		Transform(ele0, ele0_upper);
+		if(ele0_upper != "INTO")
+		{
+			cout << "invalid command :: expect \"INTO\" here but not found.";
+			return;
+		}
+		is >> ele0;//"TABLE"
+		ele0_upper = "";
+		Transform(ele0, ele0_upper);
+		if(ele0_upper != "TABLE")
+		{
+			cout << "invalid command :: expect \"TABLE\" here but not found.";
+			return;
+		}
+		getline(is, tbname, ';');		
+		while(tbname[0] == ' ')
+		{
+			tbname = tbname.substr(1, tbname.length() - 1);
+		}//要记得把最前面的空格去掉
+		std::vector<std::string>col_name;
+		col_name.clear();
+		bool chk = true;//指示是否没有对输入列作要求
+		if(tbname[tbname.length() - 1] == ')')
+		{
+			int pos = tbname.find('(');
+			string col;
+			string col_list = tbname.substr(pos + 1, tbname.length() - pos - 1);//去掉了括号，只含由逗号分隔开的列名
+			while(col_list.find(',') != -1)
+			{
+				pos = col_list.find(',');
+				col = col_list.substr(0, pos);
+				col_list = col_list.substr(pos + 2);
+				col_name.push_back(col);
+			}
+			if(col_list[col_list.length() - 1] == ')')
+			{
+				col_list = col_list.substr(0, col_list.length() - 1);
+			}
+			if(col_list.length() != 0)
+				col_name.push_back(col_list);
+			tbname = tbname.substr(0, tbname.find('('));
+			chk = false;
+		}//有输入顺序的要求
+
+		curTb = curDb->GetTable(tbname);
+		curTb->UpdateRow();
+		if(chk)//如果对输入列没有要求，只有表名，就把每一列的名字都放进col_name里面去
+		{
+			for(int i = 0; i < curTb->GetColumnName().size(); i++)
+			{
+				col_name.push_back(curTb->GetColumnName()[i]);
+			}
+		}
+		curTb->load_data_from_file(file_name, col_name);
 	}
 }
