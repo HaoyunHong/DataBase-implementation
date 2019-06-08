@@ -985,6 +985,38 @@ void TABLE::write_into_outfile(const std::string &out_file_name, const std::vect
 
 void TABLE::load_data_from_file(const std::string &in_file_name, const std::vector<std::string> &col_name)
 {
+	std::map<std::string, bool> col_map;
+	if (col_name.size() != ColumnName.size())
+	{
+		for (int i = 0; i < ColumnName.size(); i++)
+		{
+			col_map[ColumnName[i]] = false;
+		}
+		for (int i = 0; i < col_name.size(); i++)
+		{
+			col_map[col_name[i]] = true; //代表这些列会被输入
+		}
+		for (int i = 0; i < ColumnName.size(); i++)
+		{
+			if (!col_map[ColumnName[i]]) //如果这个列没有接受输入数据？？
+			{
+				cout << "Column " << ColumnName[i] << " does not have any input." << endl;
+				if (GetType(ColumnName[i]) == _INT)
+				{
+					cout << "Automatically filling 0(int) as default." << endl;
+				}
+				else if (GetType(ColumnName[i]) == _DOUBLE)
+				{
+					cout << "Automatically filling 0.0(double) as default." << endl;
+				}
+				else if (GetType(ColumnName[i]) == _CHAR)
+				{
+					cout << "Automatically filling 0(ascii to char) as default." << endl;
+				}
+			}
+		}
+	}
+
 	ifstream fin;
 	fin.open(in_file_name, ios::binary);
 	if (!fin)
@@ -1055,7 +1087,30 @@ void TABLE::load_data_from_file(const std::string &in_file_name, const std::vect
 				}
 			}
 		}
-		if(fin.peek() == EOF)break;
+		if (ColumnName.size() != col_name.size())//如果有些列存在但是没有被输入值
+		{
+			for (int i = 0; i < ColumnName.size(); i++)
+			{
+				if (!col_map[ColumnName[i]]) //如果这个列没有接受输入数据？？
+				{
+					if (GetType(ColumnName[i]) == _INT)
+					{
+						TableMap[ColumnName[i]]->push_back(0);
+					}
+					else if (GetType(ColumnName[i]) == _DOUBLE)
+					{
+						TableMap[ColumnName[i]]->push_back(0.0);
+					}
+					else if (GetType(ColumnName[i]) == _CHAR)
+					{
+						TableMap[ColumnName[i]]->push_back(char(0));
+					}
+				}
+			}
+		}
+
+		if (fin.peek() == EOF)
+			break;
 	}
 	fin.close();
 	return;
