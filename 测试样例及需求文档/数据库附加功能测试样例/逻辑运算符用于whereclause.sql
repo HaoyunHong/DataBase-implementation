@@ -1,0 +1,16 @@
+CREATE DATABASE OOP;
+USE OOP;
+CREATE TABLE poi(lkj INT, mnb INT, bvc INT, dfj CHAR, PRIMARY KEY(mnb));
+INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (1, 2, 3, "a");
+INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (2, 3, 4, "a");
+INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (3, 4, 5, "a");
+INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (4, 5, 6, "a");
+INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (5, 6, 7, "a");
+INSERT INTO poi(mnb, bvc, dfj) VALUES (7, 7, "a");
+INSERT INTO poi(lkj, bvc, dfj) VALUES (8, 8, "b");
+INSERT INTO poi(bvc) VALUES (4);
+SELECT * from poi;
+SELECT * FROM poi WHERE NOT bvc=2;
+SELECT * FROM poi WHERE bvc=7 OR mnb=5 XOR lkj=5;
+SELECT * FROM poi WHERE NOT NOT NOT NOT NOT dfj=a;
+DROP DATABASE OOP;

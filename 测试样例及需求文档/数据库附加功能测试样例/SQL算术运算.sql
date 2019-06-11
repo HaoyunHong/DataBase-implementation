@@ -1,0 +1,10 @@
+SeLeCt 2+1;
+SELect 2-1;
+SeLect 3/2;
+select 3 DIV 2;
+select 3 DiV 2;
+select 100%3;
+selecT 100 MOD 3;
+SELECT 2 MOd 3+4/2-1+8/6;
+SelECT 1/3-5 DIV 3+8 Mod 7-3/5;
+SelECT 1 / 3 -5 DIV   3 +   8   Mod 7  - 3 /5;

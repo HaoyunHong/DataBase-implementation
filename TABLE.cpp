@@ -1,5 +1,5 @@
 #include "TABLE.h"
-
+#include <fstream>
 using namespace std;
 
 void split(const string &s, vector<string> &sv, const char flag)
@@ -9,6 +9,12 @@ void split(const string &s, vector<string> &sv, const char flag)
 	string temp;
 	while (getline(iss, temp, flag))
 	{
+		while (temp[0] == ' ')
+		{
+			temp = temp.substr(1);
+		}
+		if (temp == "")
+			continue;
 		sv.push_back(temp);
 	}
 	return;
@@ -70,6 +76,7 @@ void TABLE::Update(string aname, char avalue, string condition)
 	this->UpdateRow();
 	for (int i = 0; i < RowNum; i++)
 	{
+
 		if (this->Judge(condition, i))
 		{
 			it->second->update(i, avalue);
@@ -612,17 +619,25 @@ bool TABLE::Judge(string condition, int k)
 		return 1;
 
 	//现分割逐句判断在运算逻辑运算式
-	vector<string> Con; //存储> < = 语句
+	vector<string> Con; //存储> < = 语句，还有"NOT"
 	vector<string> Sym; //存储逻辑运算符
 	vector<bool> Res;   //存储每一句的bool值
 	split(condition, Con);
+	bool has_not = false;
 	for (int i = 0; i < Con.size(); i++)
 	{
-		//遍历Con，若是< > = 语句则判断bool值，否则为逻辑运算符，加入到Sym并删除
-		bool Null_Encountered = false; //如果symbol左边的列名所对应列值为空，直接跳过当前条件
 		string ini = Con[i], upp;
+		upp = "";
 		transform(ini.begin(), ini.end(), back_inserter(upp), ::toupper);
-		if (upp == "AND" || upp == "OR")
+		if (upp == "NOT")
+		{
+			has_not = true;
+			Con.erase(Con.begin() + i);
+			i--;
+			continue;
+		}
+		//遍历Con，若是< > = 语句则判断bool值，否则为逻辑运算 符，加入到Sym并删除
+		if (upp == "AND" || upp == "OR" || upp == "XOR")
 		{
 			if (upp == "AND")
 			{
@@ -632,91 +647,194 @@ bool TABLE::Judge(string condition, int k)
 			{
 				Sym.push_back("OR");
 			}
+			if (upp == "XOR")
+			{
+				Sym.push_back("XOR");
+			}
 			Con.erase(Con.begin() + i);
 			i--;
 			continue;
 		}
 		//逐个遍历每一句中字符，若找到 > < = 则分割为两段，左为列名，将右边转化为对应列数据类型进行比较得到bool值
-		for (int p = 0; p < Con[i].size(); p++)
+		//有一个问题，为什么左边一定是列名，还有一个问题，不支持列与列之间比较吗？？
+		//改！！
+		//默认语句合法，即：不是列名的内容就一定是常数/字符串
+		for (int p = 0; p < Con[i].length(); p++)
 		{
-			if (Con[i][p] == '>' || Con[i][p] == '<' || Con[i][p] == '=')
+			//如果读到NOT证明下一个读到的玩意儿要取not
+			if (!(Con[i][p] == '>' || Con[i][p] == '<' || Con[i][p] == '='))
+				continue;
+			else
 			{
-				char Symbol = Con[i][p];
-				string value_name = Con[i].substr(0, p);
-				string target_value = Con[i].substr(p + 1, Con[i].size());
-				int index = -1;
+				string Symbol = Con[i].substr(p, 1);
+				string left_side = Con[i].substr(0, p);
+				string right_side = Con[i].substr(p + 1, Con[i].size());
+				int left_index = -1, right_index = -1; //如果这两个东西之后某一个还是-1，代表对应的那一端是常数
+				int left_i, right_i;
+				double left_d, right_d;
+				char left_c, right_c; //这六个用来进行常数之间的比较
+				DataType left_type, right_type;
 				for (int j = 0; j < ColumnName.size(); j++)
 				{
-					if (value_name == ColumnName[j])
+					if (left_side == ColumnName[j])
 					{
-						index = j;
-						//如果对应列对应行中数据为空，当前条件直接判断为false
-						if (TableMap[value_name]->Get_IsNull(k))
-						{
-							Null_Encountered = true;
-							Res.push_back(false);
-							break;
-						}
+						left_index = j;
+						break;
 					}
 				}
-				if (Null_Encountered)
-					continue;
-				if (index == -1)
+				for (int j = 0; j < ColumnName.size(); j++)
 				{
-					cout << "error : colume name not found!" << endl; //for debug
+					if (right_side == ColumnName[j])
+					{
+						right_index = j;
+						break;
+					}
 				}
-				DataType o = ColumnType[index];
-				if (Symbol == '>')
+				//接下来，把列名都转化为常数
+				if (left_index != -1)
 				{
+					left_type = ColumnType[left_index];
+					if (left_type == _INT)
+					{
+						left_i = TableMap[left_side]->Get_INT_Value(k);
+					}
+					else if (left_type == _DOUBLE)
+					{
+						left_d = TableMap[left_side]->Get_DOUBLE_Value(k);
+					}
+					else if (left_type == _CHAR)
+					{
+						left_c = TableMap[left_side]->Get_CHAR_Value(k);
+					}
+				}
+				if (right_index != -1)
+				{
+					right_type = ColumnType[right_index];
+					if (right_type == _INT)
+					{
+						right_i = TableMap[right_side]->Get_INT_Value(k);
+					}
+					else if (right_type == _DOUBLE)
+					{
+						right_d = TableMap[right_side]->Get_DOUBLE_Value(k);
+					}
+					else if (right_type == _CHAR)
+					{
+						right_c = TableMap[right_side]->Get_CHAR_Value(k);
+					}
+				}
 
-					if (o == _INT)
-					{
-						Res.push_back(TableMap[value_name]->Get_INT_Value(k) > stoi(target_value));
-					}
-					if (o == _DOUBLE)
-					{
-						Res.push_back(TableMap[value_name]->Get_DOUBLE_Value(k) > stod(target_value));
-					}
-					if (o == _CHAR)
-					{
-						Res.push_back(TableMap[value_name]->Get_CHAR_Value(k) > target_value[1]);
-					}
-				}
-				if (Symbol == '<')
+				if (left_index == -1)
 				{
-					if (o == _INT)
+					left_type = right_type;
+					if (left_type == _INT)
 					{
-						Res.push_back(TableMap[value_name]->Get_INT_Value(k) < stoi(target_value));
+						left_i = stoi(left_side);
 					}
-					if (o == _DOUBLE)
+					else if (left_type == _DOUBLE)
 					{
-						Res.push_back(TableMap[value_name]->Get_DOUBLE_Value(k) < stod(target_value));
+						left_d = stod(left_side);
 					}
-					if (o == _CHAR)
+					else if (left_type == _CHAR)
 					{
-						Res.push_back(TableMap[value_name]->Get_CHAR_Value(k) < target_value[1]);
+						left_c = left_side[0];
 					}
 				}
-				if (Symbol == '=')
+				if (right_index == -1)
 				{
-					if (o == _INT)
+					right_type = left_type;
+					if (right_type == _INT)
 					{
-						Res.push_back(TableMap[value_name]->Get_INT_Value(k) == stoi(target_value));
+						right_i = stoi(right_side);
 					}
-					if (o == _DOUBLE)
+					else if (right_type == _DOUBLE)
 					{
-						Res.push_back(TableMap[value_name]->Get_DOUBLE_Value(k) == stod(target_value));
+						right_d = stod(right_side);
 					}
-					if (o == _CHAR)
+					else if (right_type == _CHAR)
 					{
-						Res.push_back(TableMap[value_name]->Get_CHAR_Value(k) == target_value[1]);
+						right_c = right_side[0];
 					}
 				}
+				//处理有一边本来就是常量的情况
+				if (left_index != -1)
+				{
+					if (TableMap[ColumnName[left_index]]->Get_IsNull(k))
+					{
+						Res.push_back(false);
+						break;
+					}
+				}
+				if (right_index != -1)
+				{
+					if (TableMap[ColumnName[right_index]]->Get_IsNull(k))
+					{
+						Res.push_back(false);
+						break;
+					}
+
+				} //如果有NULL直接返回FALSE
+
+				if (Symbol == "<")
+				{
+					if (left_type == _INT)
+					{
+						Res.push_back(left_i < right_i);
+					}
+					else if (left_type == _DOUBLE)
+					{
+						Res.push_back(left_d < right_d);
+					}
+					else if (left_type == _CHAR)
+					{
+						Res.push_back(left_c < right_c);
+					}
+				}
+
+				else if (Symbol == ">")
+				{
+					if (left_type == _INT)
+					{
+						Res.push_back(left_i > right_i);
+					}
+					else if (left_type == _DOUBLE)
+					{
+						Res.push_back(left_d > right_d);
+					}
+					else if (left_type == _CHAR)
+					{
+						Res.push_back(left_c > right_c);
+					}
+				}
+				else if (Symbol == "=")
+				{
+					if (left_type == _INT)
+					{
+						Res.push_back(left_i == right_i);
+					}
+					else if (left_type == _DOUBLE)
+					{
+						Res.push_back(left_d == right_d);
+					}
+					else if (left_type == _CHAR)
+					{
+						Res.push_back(left_c == right_c);
+					}
+				}
+				break;
 			}
 		}
+		if (has_not)
+		{
+			Res[Res.size() - 1] = !Res[Res.size() - 1];
+			has_not = false;
+		}
 	}
-	//至此Res和Sym中分别按顺序存放bool值和逻辑运算符AND OR
+	//至此Res和Sym中分别按顺序存放bool值和逻辑运算符AND OR XOR
 	//由于AND优先级大于OR 先计算所有AND
+
+	//问题都在下面
+
 	for (int i = 0; i < Sym.size(); i++)
 	{
 		if (Sym[i] == "AND")
@@ -727,12 +845,29 @@ bool TABLE::Judge(string condition, int k)
 			i--;							//因为做过删除操作了，i要-1，再看看
 		}
 	}
-	//至此Sym中应该存放的都是OR
-	//只需遍历Res，只要有一个正确即返回true，否则返回false
-	for (int i = 0; i < Res.size(); i++)
-		if (Res[i] == true)
-			return true;
-	return false;
+	//至此Sym中应该存放的都是OR和XOR，两者并列`
+	while (Sym.size() != 0)
+	{
+		for (int i = 0; i < Sym.size(); i++)
+		{
+			if (Sym[i] == "OR")
+			{
+				Res[i] = Res[i] || Res[i + 1];
+				Res.erase(Res.begin() + i + 1);
+				Sym.erase(Sym.begin() + i);
+				i--;
+			}
+			else if (Sym[i] == "XOR")
+			{
+				Res[i] = ((Res[i] && !Res[i + 1]) || (!Res[i] && Res[i + 1]));
+				Res.erase(Res.begin() + i + 1);
+				Sym.erase(Sym.begin() + i);
+				i--;
+			} //改！
+			break;
+		}
+	}
+	return Res[0];
 }
 
 int TABLE::Count(string expression)
@@ -990,4 +1125,247 @@ void TABLE::Select_Order(const std::vector<std::string> &col_name, const std::st
 		}
 		cout << endl;
 	}
+}
+
+void TABLE::write_into_outfile(const std::string &out_file_name, const std::vector<int> &outorder, const std::vector<std::string> &col_name)
+{
+	ofstream fout;
+	fout.open(out_file_name);
+	this->UpdateRow();
+	if (RowNum == 0)
+		return;
+	if (outorder.size() == 0)
+		return; //如果不用输出，连表头都不需要打
+	if (col_name[0] == "*")
+	{
+		/*
+		for (int i = 0; i < ColumnName.size(); i++)
+		{
+			std::cout << ColumnName[i] << "\t";
+		}
+		std::cout << std::endl;
+		*/
+		//文件输出不需要打表头
+		for (int j = 0; j < outorder.size(); j++)
+		{ //遍历outorder
+			for (int i = 0; i < ColumnName.size(); i++)
+			{ //遍历所有列
+				if (ColumnType[i] == _INT)
+				{ //判断列的类型
+					auto tem = TableMap[ColumnName[i]];
+					if (tem->Get_IsNull(outorder[j]))
+						fout << "NULL\t";
+					else
+						fout << tem->Get_INT_Value(outorder[j]) << "\t";
+				}
+				else if (ColumnType[i] == _CHAR)
+				{
+					auto tem = TableMap[ColumnName[i]];
+					if (tem->Get_IsNull(outorder[j]))
+						fout << "NULL\t";
+					else
+						fout << tem->Get_CHAR_Value(outorder[j]) << "\t";
+				}
+				else if (ColumnType[i] == _DOUBLE)
+				{
+					auto tem = TableMap[ColumnName[i]];
+					if (tem->Get_IsNull(outorder[j]))
+						fout << "NULL\t";
+					else
+						fout << fixed << setprecision(4) << tem->Get_DOUBLE_Value(outorder[j]) << "\t";
+				}
+			}
+			fout << '\n';
+		}
+	}
+	//在这里讨论如果“列名”是COUNT(expression)的情况,已知不会有WHERE语句
+	/*
+	else if (col_name[0].substr(0, 6) == "COUNT(" && col_name[0][col_name[0].length() - 1] == ')')
+	{
+		cout << col_name[0] << endl;
+		string expression = col_name[0].substr(6, col_name[0].length() - 7);
+		cout << this->Count(expression) << "\t";
+	}
+	*/
+	//同样的这一部分也不需要了
+	else
+	{
+		if (outorder.size() > 0)
+		{ //输出
+			/* 
+			for (int p = 0; p < col_name.size(); p++)
+			{
+				cout << col_name[p] << "\t";
+			}
+			cout << endl;
+			*/
+			//不需要输出列名了
+
+			for (int j = 0; j < outorder.size(); j++)
+			{
+				for (int p = 0; p < col_name.size(); p++)
+				{
+
+					auto pc = TableMap[col_name[p]];
+					auto type = GetType(col_name[p]);
+					if (type == _INT)
+					{
+						if (pc->Get_IsNull(outorder[j]))
+							fout << "NULL\t";
+						else
+							fout << pc->Get_INT_Value(outorder[j]) << "\t";
+					}
+					else if (type == _CHAR)
+					{
+						if (pc->Get_IsNull(outorder[j]))
+							fout << "NULL\t";
+						else
+							fout << pc->Get_CHAR_Value(outorder[j]) << "\t";
+					}
+					else if (type == _DOUBLE)
+					{
+						if (pc->Get_IsNull(outorder[j]))
+							fout << "NULL\t";
+						else
+							fout << pc->Get_DOUBLE_Value(outorder[j]) << "\t";
+					}
+				}
+				fout << '\n';
+			}
+		}
+	}
+	fout.close();
+}
+
+void TABLE::load_data_from_file(const std::string &in_file_name, const std::vector<std::string> &col_name)
+{
+	std::map<std::string, bool> col_map;
+	if (col_name.size() != ColumnName.size())
+	{
+		for (int i = 0; i < ColumnName.size(); i++)
+		{
+			col_map[ColumnName[i]] = false;
+		}
+		for (int i = 0; i < col_name.size(); i++)
+		{
+			col_map[col_name[i]] = true; //代表这些列会被输入
+		}
+		for (int i = 0; i < ColumnName.size(); i++)
+		{
+			if (!col_map[ColumnName[i]]) //如果这个列没有接受输入数据？？
+			{
+				cout << "Column " << ColumnName[i] << " does not have any input." << endl;
+				if (GetType(ColumnName[i]) == _INT)
+				{
+					cout << "Automatically filling 0(int) as default." << endl;
+				}
+				else if (GetType(ColumnName[i]) == _DOUBLE)
+				{
+					cout << "Automatically filling 0.0(double) as default." << endl;
+				}
+				else if (GetType(ColumnName[i]) == _CHAR)
+				{
+					cout << "Automatically filling 0(ascii to char) as default." << endl;
+				}
+			}
+		}
+	}
+
+	ifstream fin;
+	fin.open(in_file_name, ios::binary);
+	if (!fin)
+	{
+		cout << "ERROR! No such file or directory." << endl;
+		return;
+	}
+	int col_number = col_name.size();
+	if (col_number == 0)
+	{
+		cout << "ERROR! No elected columns." << endl;
+		return;
+	}
+	if (fin.peek() == EOF)
+	{
+		cout << "ERROR! File is empty." << endl;
+		return;
+	}
+	char ch;
+	string content0, line0;
+
+	while (!fin.eof())
+	{
+		getline(fin, line0);
+		istringstream line(line0);
+		for (int i = 0; i < col_name.size(); i++)
+		{
+			content0 = "";
+			line >> content0;
+			istringstream content(content0);
+			if (GetType(col_name[i]) == _INT)
+			{
+				if (content0 == "NULL")
+				{
+					TableMap[col_name[i]]->push_back_null(0);
+				}
+				else
+				{
+					int k;
+					content >> k;
+					TableMap[col_name[i]]->push_back(k);
+				}
+			}
+			else if (GetType(col_name[i]) == _DOUBLE)
+			{
+				if (content0 == "NULL")
+				{
+					TableMap[col_name[i]]->push_back_null(0.0);
+				}
+				else
+				{
+					double k;
+					content >> k;
+					TableMap[col_name[i]]->push_back(k);
+				}
+			}
+			else if (GetType(col_name[i]) == _CHAR)
+			{
+				if (content0 == "NULL")
+				{
+					TableMap[col_name[i]]->push_back_null('\0');
+				}
+				else
+				{
+					char k;
+					content >> k;
+					TableMap[col_name[i]]->push_back(k);
+				}
+			}
+		}
+		if (ColumnName.size() != col_name.size()) //如果有些列存在但是没有被输入值
+		{
+			for (int i = 0; i < ColumnName.size(); i++)
+			{
+				if (!col_map[ColumnName[i]]) //如果这个列没有接受输入数据？？
+				{
+					if (GetType(ColumnName[i]) == _INT)
+					{
+						TableMap[ColumnName[i]]->push_back(0);
+					}
+					else if (GetType(ColumnName[i]) == _DOUBLE)
+					{
+						TableMap[ColumnName[i]]->push_back(0.0);
+					}
+					else if (GetType(ColumnName[i]) == _CHAR)
+					{
+						TableMap[ColumnName[i]]->push_back(char(0));
+					}
+				}
+			}
+		}
+
+		if (fin.peek() == EOF)
+			break;
+	}
+	fin.close();
+	return;
 }
