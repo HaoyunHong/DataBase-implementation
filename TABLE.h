@@ -12,6 +12,8 @@ private:
 	std::vector<int> classifier;	   //在GROUP命令中使用，为指定的列中的数据分类，数据一样即分类相同，分类从0开始
 	std::vector<int> num_of_each_kind; //记录每个种类的行数
 	int kind;						   //记录分类的种数
+
+	std::vector<int> column_to_order; //在Select ... Order，Union中使用
 public:
 	std::map<std::string, COLUMN *> TableMap; //一个map：列名->列指针
 
@@ -53,7 +55,8 @@ public:
 	int GetRowNum() { return RowNum; }
 	int Count(std::string expression);						  //实现COUNT语句,返回一个int
 	void classify(const std::vector<std::string> &group_col); //实现对选中分类，在GROUP语句中使用
-	void Select_Group(const std::vector<std::string> &col_name);
+	void Select_Group(const std::vector<std::string> &col_name, bool has_order);
+	void Select_Order(const std::vector<std::string> &col_name,const std::string &order_col);
 	void write_into_outfile(const std::string& out_file_name, const std::vector<int>& outorder, const std::vector<std::string>& col_name);//输出到目标文件
 	void load_data_from_file(const std::string& in_file_name, const std::vector<std::string>& col_name);
 };
