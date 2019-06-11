@@ -489,13 +489,23 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 
 					if (has_order) //如果有ORDER
 					{
+						for (int i = 0; i < col_name.size(); i++)
+							cout << col_name[i] << "\t";
+						cout << endl;
+						curTb->Select_Group(col_name, has_order);
+						string order_col;
+						is >> order_col; //读入ORDER
+						is >> order_col; //读入BY
+						is >> order_col;
+						order_col = order_col.substr(0, order_col.size() - 1);
+						curTb->Select_Order(col_name, order_col);
 					}
 					else
 					{
 						for (int i = 0; i < col_name.size(); i++)
 							cout << col_name[i] << "\t";
 						cout << endl;
-						curTb->Select_Group(col_name);
+						curTb->Select_Group(col_name, has_order);
 					}
 				}
 			}

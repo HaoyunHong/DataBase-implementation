@@ -804,7 +804,7 @@ void TABLE::classify(const vector<string> &group_col)
 	}
 }
 
-void TABLE::Select_Group(const std::vector<std::string> &col_name)
+void TABLE::Select_Group(const std::vector<std::string> &col_name, bool has_order)
 {
 	/*for (int i = 0; i < classifier.size(); i++)
 		cout << classifier[i] << ' ';
@@ -812,7 +812,8 @@ void TABLE::Select_Group(const std::vector<std::string> &col_name)
 	for (int i = 0; i <= kind; i++)
 		cout << num_of_each_kind[i] << ' ';
 	cout << endl;*/
-	
+
+	column_to_order.clear();
 	for (int i = 0; i <= kind; i++) //以种为一行输出
 	{
 		for (int j = 0; j < this->GetRowNum(); j++) //找到属于那一种的某一行
@@ -820,6 +821,11 @@ void TABLE::Select_Group(const std::vector<std::string> &col_name)
 			bool flag = false;
 			if (classifier[j] == i)
 			{
+				if (has_order)
+				{
+					column_to_order.push_back(j);
+					break;
+				}
 				flag = true;
 				for (int p = 0; p < col_name.size(); p++) //遍历需要输出的列名
 				{
@@ -867,6 +873,119 @@ void TABLE::Select_Group(const std::vector<std::string> &col_name)
 				}
 				if (flag)
 					break;
+			}
+		}
+		if (!has_order)
+			cout << endl;
+	}
+}
+
+void TABLE::Select_Order(const std::vector<std::string> &col_name, const std::string &order_col)
+{
+	/*for (int i = 0; i < column_to_order.size(); i++)
+		cout << column_to_order[i] << ' ';
+	cout << endl; */
+	if (order_col.substr(0, 6) == "COUNT(" && order_col[order_col.length() - 1] == ')')
+	{
+		string expression = order_col.substr(6, order_col.length() - 7);
+		vector<int> count_array;
+		for (int i = 0; i <= kind; i++)
+		{
+			int count = num_of_each_kind[classifier[column_to_order[i]]];
+			if (expression != "*")
+			{
+				COLUMN *p = this->GetColumn(expression);
+				for (int k = 0; k < this->GetRowNum(); k++)
+				{
+					if (p->Get_IsNull(k) && classifier[k] == classifier[column_to_order[i]])
+						count--;
+				}
+			}
+			count_array.push_back(count);
+		}
+
+		/*for (int i = 0; i < count_array.size(); i++)
+			cout << count_array[i] << ' ';
+		cout << endl; */
+
+		for (int i = 0; i < column_to_order.size(); i++)
+			for (int j = 0; j < column_to_order.size() - i - 1; j++)
+			{
+				if (count_array[j] > count_array[j + 1])
+				{
+					int tmp = count_array[j];
+					count_array[j] = count_array[j + 1];
+					count_array[j + 1] = tmp;
+					tmp = column_to_order[j];
+					column_to_order[j] = column_to_order[j + 1];
+					column_to_order[j + 1] = tmp;
+				}
+			}
+	}
+	else
+	{
+		COLUMN *pcol = this->GetColumn(order_col);
+		for (int i = 0; i < column_to_order.size(); i++)
+			for (int j = 0; j < column_to_order.size() - i - 1; j++)
+			{
+				bool chk = false;
+				switch (this->GetType(order_col))
+				{
+				case _INT:
+					if (pcol->Get_INT_Value(j) > pcol->Get_INT_Value(j + 1))
+						chk = true;
+					break;
+				case _DOUBLE:
+					if (pcol->Get_DOUBLE_Value(j) > pcol->Get_DOUBLE_Value(j + 1))
+						chk = true;
+					break;
+				case _CHAR:
+					if (pcol->Get_CHAR_Value(j) > pcol->Get_CHAR_Value(j + 1))
+						chk = true;
+					break;
+				}
+				if (chk)
+				{
+					int tmp = column_to_order[j];
+					column_to_order[j] = column_to_order[j + 1];
+					column_to_order[j + 1] = tmp;
+				}
+			}
+	}
+
+	/* for (int i = 0; i < column_to_order.size(); i++)
+		cout << column_to_order[i] << ' ';
+	cout << endl;*/
+
+	for (int j = 0; j <= kind; j++) //遍历每个种类
+	{
+		for (int i = 0; i < col_name.size(); i++)
+		{
+			if (col_name[i].substr(0, 6) == "COUNT(" && col_name[i][col_name[0].length() - 1] == ')')
+			{
+				string expression = col_name[i].substr(6, col_name[i].length() - 7);
+				int count = num_of_each_kind[classifier[column_to_order[j]]];
+				if (expression != "*")
+				{
+					COLUMN *p = this->GetColumn(expression);
+					for (int k = 0; k < this->GetRowNum(); k++)
+					{
+						if (p->Get_IsNull(k) && classifier[k] == classifier[column_to_order[j]])
+							count--;
+					}
+				}
+				cout << count << "\t";
+			}
+			else
+			{
+				auto pc = TableMap[col_name[i]];
+				auto type = GetType(col_name[i]);
+				if (type == _INT)
+					cout << pc->Get_INT_Value(column_to_order[j]) << "\t";
+				else if (type == _CHAR)
+					cout << pc->Get_CHAR_Value(column_to_order[j]) << "\t";
+				else if (type == _DOUBLE)
+					cout << pc->Get_DOUBLE_Value(column_to_order[j]) << "\t";
 			}
 		}
 		cout << endl;
