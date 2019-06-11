@@ -410,7 +410,23 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		bool has_whereclause = true; //判断是否有whereclause语句（现在含义扩大，含有GROUP也将算入）
 		while (chk == 0)
 		{
-			is >> ele2;
+			string input_upper;
+			Transform(input,input_upper);
+			if(input_upper.find("+")!=-1 || input_upper.find("-")!=-1 || input_upper.find("*")!=-1 || input_upper.find("/")!=-1 || input_upper.find("%")!=-1 || input_upper.find(" DIV ")!=-1 || input_upper.find(" MOD ")!=-1)
+			{
+				stringstream iss(input_upper);//读进来作计算器处理
+				string select;
+				iss >> select;
+				string whole_expression = input_upper.substr(6);
+				whole_expression = whole_expression_standardize(whole_expression);
+				cout<<whole_expression<<endl;
+				string num_result = arithmetic_calculator(whole_expression);
+				cout << setprecision(3) << num_result << endl;//保留三位有效数字
+				break;
+			}
+			else
+			{
+				is >> ele2;
 			if (ele2[ele2.length() - 1] == ',')
 			{
 				ele2 = ele2.substr(0, ele2.length() - 1);
@@ -430,6 +446,8 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			else //正在读入的还是一个列名
 			{
 				col_name.push_back(ele2);
+			}
+
 			}
 		}
 		//现在有两种情况：第一种：读到了FROM，没有INTO，第二种，读到了INTO，FROM还在后面
@@ -626,4 +644,138 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		}
 		curTb->load_data_from_file(file_name, col_name);
 	}
+}
+
+string PARSE::whole_expression_standardize(string whole_expression)
+{
+	string copy_whole_expression = whole_expression + ";";
+	int length = whole_expression.length();
+	int i = 1;
+	while (i< copy_whole_expression.length() && copy_whole_expression[i] != ':')
+	{
+		if (copy_whole_expression[i] == '+' || copy_whole_expression[i] == '-' || copy_whole_expression[i] == '*' || copy_whole_expression[i] == '/' || copy_whole_expression[i] == '%')
+		{
+			copy_whole_expression = copy_whole_expression.substr(0, i) + " " + copy_whole_expression.substr(i, 1) + " " + copy_whole_expression.substr(i + 1);
+			i += 2;
+		}
+		else
+		{
+			i++;
+		}
+	}
+	return copy_whole_expression.substr(0,i-1);
+}
+
+int PARSE::P(string arithmetic_operator)//制定运算符优先级
+{
+	if (arithmetic_operator == "+" || arithmetic_operator == "-")
+	{
+		return 1;
+	}
+	if (arithmetic_operator == "*" || arithmetic_operator == "/"|| arithmetic_operator == "DIV" || arithmetic_operator == "%"|| arithmetic_operator == "MOD")
+	{
+		return 2;
+	}
+	if (arithmetic_operator == "#")
+	{
+		return 0;
+	}
+	return -1;
+}
+
+//算数计算器
+string PARSE::arithmetic_calculator(string& whole_expression)
+{
+	istringstream s(whole_expression+" # ");//"#"表示算术表达式结束
+	std::stack<string> arithmetic_operators;//运算符栈
+	std::stack<double> numbers;//数据栈
+	arithmetic_operators.push("#");
+	string arithmetic;
+	bool used = true;
+	while (!arithmetic_operators.empty())
+	{
+		if (s && used)
+		{
+			s >> arithmetic;
+		}
+		//cout << "arithmetic: " << arithmetic << endl;
+		if (arithmetic != "+" && arithmetic != "-" && arithmetic != "*" && arithmetic != "/" && arithmetic != "DIV" && arithmetic != "%" && arithmetic != "MOD" && arithmetic != "#")
+		{
+			numbers.push(stod(arithmetic));
+			//cout << "temp_numbers.top(): " << numbers.top() << endl;
+			continue;
+		}
+	
+		else
+		{
+			if (P(arithmetic_operators.top()) < P(arithmetic))
+			{
+				used = true;
+				/*cout << "P(arithmetic_operators.top()): " << P(arithmetic_operators.top()) << endl;
+				cout << "P(arithmetic): " << P(arithmetic) << endl;
+				cout << "temp_arithmetic_operators.top(): "<<arithmetic_operators.top() << endl;
+				cout << "temp_arithmetic: "<< arithmetic << endl;*/
+				arithmetic_operators.push(arithmetic);
+			}
+			else
+			{
+				if (arithmetic == "#" && arithmetic_operators.top() == "#")
+				{
+					break;
+				}
+				used = false;
+				double number2 = numbers.top();
+				numbers.pop();
+				double number1 = numbers.top();
+				numbers.pop();
+				string op = arithmetic_operators.top();
+				arithmetic_operators.pop();
+				if (op == "+")
+				{
+					numbers.push(number1 + number2);
+				}
+				if (op == "-")
+				{
+					numbers.push(number1 - number2);
+				}
+				if (op == "*")
+				{
+					numbers.push(number1 * number2);
+				}
+				if (op == "/" || op == "DIV")
+				{
+					string number2_upper = to_string(number2);
+					//？？？不知为何，这里编译器识别不出来
+					//Transform(to_string(number2),number2_upper);
+					if (number2_upper== "NULL")
+					{
+						return "NULL";
+					}
+					numbers.push(number1 / number2);
+
+				}
+				if (op == "%" || op == "MOD")
+				{
+					string number2_upper = to_string(number2);
+					//Transform(to_string(number2),number2_upper);
+					if (number2_upper== "NULL")
+					{
+						return "NULL";
+					}
+					numbers.push(int(number1) % int(number2));
+				}
+
+			}
+		}
+		/*if (arithmetic == "#" && arithmetic_operators.top() == "#")
+		{
+			cout << "arithmetic_operators.top(): " << arithmetic_operators.top() << endl;
+			//arithmetic_operators.pop();
+			break;
+		}
+		cout << "arithmetic_operators.top(): " << arithmetic_operators.top() << endl;
+		cout << "numbers.top(): " << numbers.top() << endl;*/
+		
+	}
+	return to_string(numbers.top());
 }

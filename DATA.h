@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <sstream>
 #include <string.h>
+#include<stack>
 
 class DATA;
 class COLUMN;
