@@ -9,6 +9,12 @@ void split(const string &s, vector<string> &sv, const char flag)
 	string temp;
 	while (getline(iss, temp, flag))
 	{
+		while (temp[0] == ' ')
+		{
+			temp = temp.substr(1);
+		}
+		if (temp == "")
+			continue;
 		sv.push_back(temp);
 	}
 	return;
@@ -70,6 +76,7 @@ void TABLE::Update(string aname, char avalue, string condition)
 	this->UpdateRow();
 	for (int i = 0; i < RowNum; i++)
 	{
+
 		if (this->Judge(condition, i))
 		{
 			it->second->update(i, avalue);
@@ -612,17 +619,25 @@ bool TABLE::Judge(string condition, int k)
 		return 1;
 
 	//现分割逐句判断在运算逻辑运算式
-	vector<string> Con; //存储> < = 语句
+	vector<string> Con; //存储> < = 语句，还有"NOT"
 	vector<string> Sym; //存储逻辑运算符
 	vector<bool> Res;   //存储每一句的bool值
 	split(condition, Con);
+	bool has_not = false;
 	for (int i = 0; i < Con.size(); i++)
 	{
-		//遍历Con，若是< > = 语句则判断bool值，否则为逻辑运算符，加入到Sym并删除
-		bool Null_Encountered = false; //如果symbol左边的列名所对应列值为空，直接跳过当前条件
 		string ini = Con[i], upp;
+		upp = "";
 		transform(ini.begin(), ini.end(), back_inserter(upp), ::toupper);
-		if (upp == "AND" || upp == "OR")
+		if (upp == "NOT")
+		{
+			has_not = true;
+			Con.erase(Con.begin() + i);
+			i--;
+			continue;
+		}
+		//遍历Con，若是< > = 语句则判断bool值，否则为逻辑运算 符，加入到Sym并删除
+		if (upp == "AND" || upp == "OR" || upp == "XOR")
 		{
 			if (upp == "AND")
 			{
@@ -632,91 +647,194 @@ bool TABLE::Judge(string condition, int k)
 			{
 				Sym.push_back("OR");
 			}
+			if (upp == "XOR")
+			{
+				Sym.push_back("XOR");
+			}
 			Con.erase(Con.begin() + i);
 			i--;
 			continue;
 		}
 		//逐个遍历每一句中字符，若找到 > < = 则分割为两段，左为列名，将右边转化为对应列数据类型进行比较得到bool值
-		for (int p = 0; p < Con[i].size(); p++)
+		//有一个问题，为什么左边一定是列名，还有一个问题，不支持列与列之间比较吗？？
+		//改！！
+		//默认语句合法，即：不是列名的内容就一定是常数/字符串
+		for (int p = 0; p < Con[i].length(); p++)
 		{
-			if (Con[i][p] == '>' || Con[i][p] == '<' || Con[i][p] == '=')
+			//如果读到NOT证明下一个读到的玩意儿要取not
+			if (!(Con[i][p] == '>' || Con[i][p] == '<' || Con[i][p] == '='))
+				continue;
+			else
 			{
-				char Symbol = Con[i][p];
-				string value_name = Con[i].substr(0, p);
-				string target_value = Con[i].substr(p + 1, Con[i].size());
-				int index = -1;
+				string Symbol = Con[i].substr(p, 1);
+				string left_side = Con[i].substr(0, p);
+				string right_side = Con[i].substr(p + 1, Con[i].size());
+				int left_index = -1, right_index = -1; //如果这两个东西之后某一个还是-1，代表对应的那一端是常数
+				int left_i, right_i;
+				double left_d, right_d;
+				char left_c, right_c; //这六个用来进行常数之间的比较
+				DataType left_type, right_type;
 				for (int j = 0; j < ColumnName.size(); j++)
 				{
-					if (value_name == ColumnName[j])
+					if (left_side == ColumnName[j])
 					{
-						index = j;
-						//如果对应列对应行中数据为空，当前条件直接判断为false
-						if (TableMap[value_name]->Get_IsNull(k))
-						{
-							Null_Encountered = true;
-							Res.push_back(false);
-							break;
-						}
+						left_index = j;
+						break;
 					}
 				}
-				if (Null_Encountered)
-					continue;
-				if (index == -1)
+				for (int j = 0; j < ColumnName.size(); j++)
 				{
-					cout << "error : colume name not found!" << endl; //for debug
+					if (right_side == ColumnName[j])
+					{
+						right_index = j;
+						break;
+					}
 				}
-				DataType o = ColumnType[index];
-				if (Symbol == '>')
+				//接下来，把列名都转化为常数
+				if (left_index != -1)
 				{
+					left_type = ColumnType[left_index];
+					if (left_type == _INT)
+					{
+						left_i = TableMap[left_side]->Get_INT_Value(k);
+					}
+					else if (left_type == _DOUBLE)
+					{
+						left_d = TableMap[left_side]->Get_DOUBLE_Value(k);
+					}
+					else if (left_type == _CHAR)
+					{
+						left_c = TableMap[left_side]->Get_CHAR_Value(k);
+					}
+				}
+				if (right_index != -1)
+				{
+					right_type = ColumnType[right_index];
+					if (right_type == _INT)
+					{
+						right_i = TableMap[right_side]->Get_INT_Value(k);
+					}
+					else if (right_type == _DOUBLE)
+					{
+						right_d = TableMap[right_side]->Get_DOUBLE_Value(k);
+					}
+					else if (right_type == _CHAR)
+					{
+						right_c = TableMap[right_side]->Get_CHAR_Value(k);
+					}
+				}
 
-					if (o == _INT)
-					{
-						Res.push_back(TableMap[value_name]->Get_INT_Value(k) > stoi(target_value));
-					}
-					if (o == _DOUBLE)
-					{
-						Res.push_back(TableMap[value_name]->Get_DOUBLE_Value(k) > stod(target_value));
-					}
-					if (o == _CHAR)
-					{
-						Res.push_back(TableMap[value_name]->Get_CHAR_Value(k) > target_value[1]);
-					}
-				}
-				if (Symbol == '<')
+				if (left_index == -1)
 				{
-					if (o == _INT)
+					left_type = right_type;
+					if (left_type == _INT)
 					{
-						Res.push_back(TableMap[value_name]->Get_INT_Value(k) < stoi(target_value));
+						left_i = stoi(left_side);
 					}
-					if (o == _DOUBLE)
+					else if (left_type == _DOUBLE)
 					{
-						Res.push_back(TableMap[value_name]->Get_DOUBLE_Value(k) < stod(target_value));
+						left_d = stod(left_side);
 					}
-					if (o == _CHAR)
+					else if (left_type == _CHAR)
 					{
-						Res.push_back(TableMap[value_name]->Get_CHAR_Value(k) < target_value[1]);
+						left_c = left_side[0];
 					}
 				}
-				if (Symbol == '=')
+				if (right_index == -1)
 				{
-					if (o == _INT)
+					right_type = left_type;
+					if (right_type == _INT)
 					{
-						Res.push_back(TableMap[value_name]->Get_INT_Value(k) == stoi(target_value));
+						right_i = stoi(right_side);
 					}
-					if (o == _DOUBLE)
+					else if (right_type == _DOUBLE)
 					{
-						Res.push_back(TableMap[value_name]->Get_DOUBLE_Value(k) == stod(target_value));
+						right_d = stod(right_side);
 					}
-					if (o == _CHAR)
+					else if (right_type == _CHAR)
 					{
-						Res.push_back(TableMap[value_name]->Get_CHAR_Value(k) == target_value[1]);
+						right_c = right_side[0];
 					}
 				}
+				//处理有一边本来就是常量的情况
+				if (left_index != -1)
+				{
+					if (TableMap[ColumnName[left_index]]->Get_IsNull(k))
+					{
+						Res.push_back(false);
+						break;
+					}
+				}
+				if (right_index != -1)
+				{
+					if (TableMap[ColumnName[right_index]]->Get_IsNull(k))
+					{
+						Res.push_back(false);
+						break;
+					}
+
+				} //如果有NULL直接返回FALSE
+
+				if (Symbol == "<")
+				{
+					if (left_type == _INT)
+					{
+						Res.push_back(left_i < right_i);
+					}
+					else if (left_type == _DOUBLE)
+					{
+						Res.push_back(left_d < right_d);
+					}
+					else if (left_type == _CHAR)
+					{
+						Res.push_back(left_c < right_c);
+					}
+				}
+
+				else if (Symbol == ">")
+				{
+					if (left_type == _INT)
+					{
+						Res.push_back(left_i > right_i);
+					}
+					else if (left_type == _DOUBLE)
+					{
+						Res.push_back(left_d > right_d);
+					}
+					else if (left_type == _CHAR)
+					{
+						Res.push_back(left_c > right_c);
+					}
+				}
+				else if (Symbol == "=")
+				{
+					if (left_type == _INT)
+					{
+						Res.push_back(left_i == right_i);
+					}
+					else if (left_type == _DOUBLE)
+					{
+						Res.push_back(left_d == right_d);
+					}
+					else if (left_type == _CHAR)
+					{
+						Res.push_back(left_c == right_c);
+					}
+				}
+				break;
 			}
 		}
+		if (has_not)
+		{
+			Res[Res.size() - 1] = !Res[Res.size() - 1];
+			has_not = false;
+		}
 	}
-	//至此Res和Sym中分别按顺序存放bool值和逻辑运算符AND OR
+	//至此Res和Sym中分别按顺序存放bool值和逻辑运算符AND OR XOR
 	//由于AND优先级大于OR 先计算所有AND
+
+	//问题都在下面
+
 	for (int i = 0; i < Sym.size(); i++)
 	{
 		if (Sym[i] == "AND")
@@ -727,12 +845,29 @@ bool TABLE::Judge(string condition, int k)
 			i--;							//因为做过删除操作了，i要-1，再看看
 		}
 	}
-	//至此Sym中应该存放的都是OR
-	//只需遍历Res，只要有一个正确即返回true，否则返回false
-	for (int i = 0; i < Res.size(); i++)
-		if (Res[i] == true)
-			return true;
-	return false;
+	//至此Sym中应该存放的都是OR和XOR，两者并列`
+	while (Sym.size() != 0)
+	{
+		for (int i = 0; i < Sym.size(); i++)
+		{
+			if (Sym[i] == "OR")
+			{
+				Res[i] = Res[i] || Res[i + 1];
+				Res.erase(Res.begin() + i + 1);
+				Sym.erase(Sym.begin() + i);
+				i--;
+			}
+			else if (Sym[i] == "XOR")
+			{
+				Res[i] = ((Res[i] && !Res[i + 1]) || (!Res[i] && Res[i + 1]));
+				Res.erase(Res.begin() + i + 1);
+				Sym.erase(Sym.begin() + i);
+				i--;
+			} //改！
+			break;
+		}
+	}
+	return Res[0];
 }
 
 int TABLE::Count(string expression)
@@ -1087,7 +1222,7 @@ void TABLE::load_data_from_file(const std::string &in_file_name, const std::vect
 				}
 			}
 		}
-		if (ColumnName.size() != col_name.size())//如果有些列存在但是没有被输入值
+		if (ColumnName.size() != col_name.size()) //如果有些列存在但是没有被输入值
 		{
 			for (int i = 0; i < ColumnName.size(); i++)
 			{

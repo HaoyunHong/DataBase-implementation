@@ -12,3 +12,5 @@ public:
 	void Transform(std::string &src, std::string &dst); //关键字转换为大写
 	DataType attype(std::string type);					//获得数据类型
 };
+
+
