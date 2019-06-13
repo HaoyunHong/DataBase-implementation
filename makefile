@@ -1,7 +1,7 @@
-ALL:main
+ALL: main1 main2
 	
-main : DATA COLUMN TABLE ALLBASES PARSE MAIN 
-	g++ main.o DATA.o TABLE.o COLUMN.o ALLBASES.o PARSE.o -o main -lm -O2 -DONLINE_JUDGE -std=c++11
+main1 : DATA COLUMN TABLE ALLBASES PARSE MAIN 
+	g++ main.o DATA.o TABLE.o COLUMN.o ALLBASES.o PARSE.o -o main1 -lm -O2 -DONLINE_JUDGE -std=c++11
 DATA : DATA.cpp
 	g++ -c DATA.cpp -std=c++11
 MAIN : main.cpp
@@ -14,6 +14,8 @@ ALLBASES : ALLBASES.cpp
 	g++ -c ALLBASES.cpp -std=c++11
 PARSE : PARSE.cpp
 	g++ -c PARSE.cpp -std=c++11
+main2 : DATA COLUMN TABLE ALLBASES PARSE MAIN 
+	g++ main.o DATA.o TABLE.o COLUMN.o ALLBASES.o PARSE.o -o main2 -lm -O2 -DONLINE_JUDGE -std=c++11
 
 clean:
-	rm *.o main
+	rm *.o main1 main2

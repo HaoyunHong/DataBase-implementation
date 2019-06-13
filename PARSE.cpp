@@ -359,43 +359,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			curTb->Update(mclname, val, condition);
 		}
 	}
-	/*
-	else if (ele1 == "SELECT")//SELECT COLNAME FROM TBNAME WHERE .....;
-	{
-		string ele2;
-		is >> ele2;//储存了列名
-		string ele3;
-		is >> ele3;//FROM
-		is >> ele3;//TBNAME
-		bool end = false; //判断是否有whereclause语句
-		for (int j = 0; ele3[j]; j++)
-		{
-			if (ele3[j] == ';')
-			{
-				end = true;
-				ele3.erase(j, 1);
-				j--;
-			}
-		}
-		for (auto it = curDb->DataBaseMap.begin(); it != curDb->DataBaseMap.end(); it++)
-		{
-			if (it->first == ele3)
-			{
-				curTb = it->second;
-				break;
-			}
-			if (it == curDb->DataBaseMap.end())
-				cout << "CAN NOT FIND TABLENAME" << ele3 << endl;
-		}//利用ele3里面的TBNAME找对应表的指针
-		string condition = "true"; //condition缺省为“true”，供无whereclause语句时使用
-		if (!end)
-		{
-			is >> ele3;
-			getline(is, condition, ';');
-		}//如果有whereclause，用ele3储存"WHERE",condition储存whereclause句子
-		auto outorder = curTb->Select(ele2, condition);
-		curTb->show_output_from_select(outorder, ele2);
-	}*/
+
 	else if (ele1 == "SELECT")
 	//SELECT COLNAME FROM TBNAME WHERE ...;
 	//SELECT COLNAME INTO OUTPUTFILE FROM TBNAME WHERE ...;
