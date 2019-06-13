@@ -396,13 +396,14 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		while (chk == 0)
 		{
 			string input_upper;
-			Transform(input, input_upper);
-			if (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1)
+			Transform(input,input_upper);
+			/**再加两个判断，防止影响后面**/
+			if(input_upper.find(" FROM ")==-1 && input_upper.find(" INTO ")==-1&&(input_upper.find("+")!=-1 || input_upper.find("-")!=-1 || input_upper.find("*")!=-1 || input_upper.find("/")!=-1 || input_upper.find("%")!=-1 || input_upper.find(" DIV ")!=-1 || input_upper.find(" MOD ")!=-1))
 			{
 				stringstream iss(input_upper); //读进来作计算器处理
 				string select;
 				iss >> select;
-				string whole_expression = input_upper.substr(6);
+				string whole_expression = input_upper.substr(7);
 				whole_expression = whole_expression_standardize(whole_expression);
 				cout << whole_expression << endl;
 				string num_result = arithmetic_calculator(whole_expression);
