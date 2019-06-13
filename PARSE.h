@@ -14,6 +14,7 @@ public:
 	std::string whole_expression_standardize(std::string whole_expression);//对缺乏括号的算数符号进行处理
 	int P(std::string arithmetic_operator);//制定运算符优先级
 	std::string arithmetic_calculator(std::string& whole_expression);//算数计算器
+	std::string constify(std::string condition, const std::vector<std::string> &tbname, TABLE *ptb, int line_num, const std::vector<int>outorder, const std::vector<std::string> &col_name, const std::vector<std::string> &col_tb_name);
 };
 
 

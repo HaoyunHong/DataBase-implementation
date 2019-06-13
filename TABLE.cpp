@@ -128,6 +128,10 @@ bool TABLE::MyCompare(int a, int b, string cname)
 	}
 	return false;
 }
+std::string TABLE::Get_KeyColumn()
+{
+	return KeyColumn;
+}
 
 /*void TABLE::Select(string name, string condition)
 { //主要接口
@@ -299,24 +303,50 @@ const std::vector<int> &TABLE::Select(const std::vector<std::string> &col_name, 
 			outorder.push_back(j);
 		}
 	}
-	if (outorder.size() > 1)
+	this->bubble_sort(outorder);
+	return outorder;
+}
+
+void TABLE::bubble_sort(std::vector<int> &order)
+{
+	if (order.size() > 1)
 	{ //冒泡排序
-		for (int i = 0; i < (outorder.size() - 1); i++)
+		for (int i = 0; i < (order.size() - 1); i++)
 		{
-			if (i >= (outorder.size() - 1))
+			if (i >= (order.size() - 1))
 				break;
-			for (int j = 0; j < (outorder.size() - 1 - i); j++)
+			for (int j = 0; j < (order.size() - 1 - i); j++)
 			{
-				if (this->MyCompare(outorder[j + 1], outorder[j], KeyColumn))
+				if (this->MyCompare(order[j + 1], order[j], this->Get_KeyColumn()))
 				{
-					int tmp = outorder[j + 1];
-					outorder[j + 1] = outorder[j];
-					outorder[j] = tmp;
+					int tmp = order[j + 1];
+					order[j + 1] = order[j];
+					order[j] = tmp;
 				}
 			}
 		}
 	}
-	return outorder;
+}
+
+void TABLE::show_output_from_col(const std::string &colname, const std::vector<int> &outorder, int k)
+{
+	if (TableMap[colname]->Get_IsNull(k))
+	{
+		cout << "NULL"
+			 << "\t";
+	} //为空
+	if (GetType(colname) == _INT)
+	{
+		cout << TableMap[colname]->Get_INT_Value(outorder[k]) << "\t";
+	}
+	else if (GetType(colname) == _DOUBLE)
+	{
+		cout << fixed << setprecision(4) << TableMap[colname]->Get_DOUBLE_Value(outorder[k]) << "\t";
+	}
+	else if (GetType(colname) == _CHAR)
+	{
+		cout << TableMap[colname]->Get_CHAR_Value(outorder[k]) << "\t";
+	} //不为空
 }
 
 void TABLE::show_output_from_select(const std::vector<std::string> &col_name, const std::vector<int> &outorder)
@@ -658,6 +688,7 @@ bool TABLE::Judge(string condition, int k)
 		//逐个遍历每一句中字符，若找到 > < = 则分割为两段，左为列名，将右边转化为对应列数据类型进行比较得到bool值
 		//有一个问题，为什么左边一定是列名，还有一个问题，不支持列与列之间比较吗？？
 		//改！！
+		//NULL怎么办？？
 		//默认语句合法，即：不是列名的内容就一定是常数/字符串
 		for (int p = 0; p < Con[i].length(); p++)
 		{
@@ -669,10 +700,14 @@ bool TABLE::Judge(string condition, int k)
 				string Symbol = Con[i].substr(p, 1);
 				string left_side = Con[i].substr(0, p);
 				string right_side = Con[i].substr(p + 1, Con[i].size());
-				if(left_side[0] == '\"')left_side = left_side.substr(1);
-				if(left_side[left_side.length() - 1] == '\"')left_side = left_side.substr(0, left_side.length() - 1);
-				if(right_side[0] == '\"')right_side = right_side.substr(1);
-				if(right_side[right_side.length() - 1] == '\"')right_side = right_side.substr(0, right_side.length() - 1);
+				if (left_side[0] == '\"' || left_side[0] == '\'')
+					left_side = left_side.substr(1);
+				if (left_side[left_side.length() - 1] == '\"' || left_side[left_side.length() - 1] == '\'')
+					left_side = left_side.substr(0, left_side.length() - 1);
+				if (right_side[0] == '\"' || right_side[0] == '\'')
+					right_side = right_side.substr(1);
+				if (right_side[right_side.length() - 1] == '\"' || right_side[right_side.length() - 1] == '\'')
+					right_side = right_side.substr(0, right_side.length() - 1);
 				int left_index = -1, right_index = -1; //如果这两个东西之后某一个还是-1，代表对应的那一端是常数
 				int left_i, right_i;
 				double left_d, right_d;
@@ -695,134 +730,175 @@ bool TABLE::Judge(string condition, int k)
 					}
 				}
 				//接下来，把列名都转化为常数
-				if (left_index != -1)
+				if (left_index == -1 && right_index == -1)
 				{
-					left_type = ColumnType[left_index];
-					if (left_type == _INT)
+					if ((left_side[0] <= 'Z' && left_side[0] >= 'A') || (left_side[0] <= 'z' && left_side[0] >= 'a'))
 					{
-						left_i = TableMap[left_side]->Get_INT_Value(k);
-					}
-					else if (left_type == _DOUBLE)
-					{
-						left_d = TableMap[left_side]->Get_DOUBLE_Value(k);
-					}
-					else if (left_type == _CHAR)
-					{
-						left_c = TableMap[left_side]->Get_CHAR_Value(k);
-					}
-				}
-				if (right_index != -1)
-				{
-					right_type = ColumnType[right_index];
-					if (right_type == _INT)
-					{
-						right_i = TableMap[right_side]->Get_INT_Value(k);
-					}
-					else if (right_type == _DOUBLE)
-					{
-						right_d = TableMap[right_side]->Get_DOUBLE_Value(k);
-					}
-					else if (right_type == _CHAR)
-					{
-						right_c = TableMap[right_side]->Get_CHAR_Value(k);
-					}
-				}
-
-				if (left_index == -1)
-				{
-					left_type = right_type;
-					if (left_type == _INT)
-					{
-						left_i = stoi(left_side);
-					}
-					else if (left_type == _DOUBLE)
-					{
-						left_d = stod(left_side);
-					}
-					else if (left_type == _CHAR)
-					{
+						left_type = _CHAR;
 						left_c = left_side[0];
-					}
-				}
-				if (right_index == -1)
-				{
-					right_type = left_type;
-					if (right_type == _INT)
-					{
-						right_i = stoi(right_side);
-					}
-					else if (right_type == _DOUBLE)
-					{
-						right_d = stod(right_side);
-					}
-					else if (right_type == _CHAR)
-					{
 						right_c = right_side[0];
-					}
-				}
-				//处理有一边本来就是常量的情况
-				if (left_index != -1)
-				{
-					if (TableMap[ColumnName[left_index]]->Get_IsNull(k))
+						if (Symbol == "<")
+							Res.push_back(left_c < right_c);
+						else if (Symbol == ">")
+							Res.push_back(left_c > right_c);
+						else if (Symbol == "=")
+							Res.push_back(left_c == right_c);
+					} //CHAR
+					else if (left_side.find('.') != -1 || right_side.find('.') != -1)
 					{
-						Res.push_back(false);
-						break;
-					}
-				}
-				if (right_index != -1)
-				{
-					if (TableMap[ColumnName[right_index]]->Get_IsNull(k))
+						left_type = _DOUBLE;
+						left_d = stod(left_side);
+						right_d = stod(right_side);
+						if (Symbol == "<")
+							Res.push_back(left_d < right_d);
+						else if (Symbol == ">")
+							Res.push_back(left_d > right_d);
+						else if (Symbol == "=")
+							Res.push_back(left_d == right_d);
+					} //DOUBLE
+					else
 					{
-						Res.push_back(false);
-						break;
+						left_type = _INT;
+						left_i = stoi(left_side);
+						right_i = stoi(right_side);
+						if (Symbol == "<")
+							Res.push_back(left_i < right_i);
+						else if (Symbol == ">")
+							Res.push_back(left_i > right_i);
+						else if (Symbol == "=")
+							Res.push_back(left_i == right_i);
+					}
+				} //如果两边都是常数，不可能有NULL
+				else
+				{
+					if (left_index != -1)
+					{
+						left_type = ColumnType[left_index];
+						if (left_type == _INT)
+						{
+							left_i = TableMap[left_side]->Get_INT_Value(k);
+						}
+						else if (left_type == _DOUBLE)
+						{
+							left_d = TableMap[left_side]->Get_DOUBLE_Value(k);
+						}
+						else if (left_type == _CHAR)
+						{
+							left_c = TableMap[left_side]->Get_CHAR_Value(k);
+						}
+					}
+					if (right_index != -1)
+					{
+						right_type = ColumnType[right_index];
+						if (right_type == _INT)
+						{
+							right_i = TableMap[right_side]->Get_INT_Value(k);
+						}
+						else if (right_type == _DOUBLE)
+						{
+							right_d = TableMap[right_side]->Get_DOUBLE_Value(k);
+						}
+						else if (right_type == _CHAR)
+						{
+							right_c = TableMap[right_side]->Get_CHAR_Value(k);
+						}
+					}//处理不是常数的左/右端式子
+
+					if (left_index == -1)
+					{
+						left_type = right_type;
+						if (left_type == _INT)
+						{
+							left_i = stoi(left_side);
+						}
+						else if (left_type == _DOUBLE)
+						{
+							left_d = stod(left_side);
+						}
+						else if (left_type == _CHAR)
+						{
+							left_c = left_side[0];
+						}
+					}
+					if (right_index == -1)
+					{
+						right_type = left_type;
+						if (right_type == _INT)
+						{
+							right_i = stoi(right_side);
+						}
+						else if (right_type == _DOUBLE)
+						{
+							right_d = stod(right_side);
+						}
+						else if (right_type == _CHAR)
+						{
+							right_c = right_side[0];
+						}
+					}
+					//处理有一边本来就是常量的情况
+					if (left_index != -1)
+					{
+						if (TableMap[ColumnName[left_index]]->Get_IsNull(k))
+						{
+							Res.push_back(false);
+							break;
+						}
+					}
+					if (right_index != -1)
+					{
+						if (TableMap[ColumnName[right_index]]->Get_IsNull(k))
+						{
+							Res.push_back(false);
+							break;
+						}
+					} //如果有NULL直接返回FALSE
+
+					if (Symbol == "<")
+					{
+						if (left_type == _INT)
+						{
+							Res.push_back(left_i < right_i);
+						}
+						else if (left_type == _DOUBLE)
+						{
+							Res.push_back(left_d < right_d);
+						}
+						else if (left_type == _CHAR)
+						{
+							Res.push_back(left_c < right_c);
+						}
 					}
 
-				} //如果有NULL直接返回FALSE
-
-				if (Symbol == "<")
-				{
-					if (left_type == _INT)
+					else if (Symbol == ">")
 					{
-						Res.push_back(left_i < right_i);
+						if (left_type == _INT)
+						{
+							Res.push_back(left_i > right_i);
+						}
+						else if (left_type == _DOUBLE)
+						{
+							Res.push_back(left_d > right_d);
+						}
+						else if (left_type == _CHAR)
+						{
+							Res.push_back(left_c > right_c);
+						}
 					}
-					else if (left_type == _DOUBLE)
+					else if (Symbol == "=")
 					{
-						Res.push_back(left_d < right_d);
-					}
-					else if (left_type == _CHAR)
-					{
-						Res.push_back(left_c < right_c);
-					}
-				}
-
-				else if (Symbol == ">")
-				{
-					if (left_type == _INT)
-					{
-						Res.push_back(left_i > right_i);
-					}
-					else if (left_type == _DOUBLE)
-					{
-						Res.push_back(left_d > right_d);
-					}
-					else if (left_type == _CHAR)
-					{
-						Res.push_back(left_c > right_c);
-					}
-				}
-				else if (Symbol == "=")
-				{
-					if (left_type == _INT)
-					{
-						Res.push_back(left_i == right_i);
-					}
-					else if (left_type == _DOUBLE)
-					{
-						Res.push_back(left_d == right_d);
-					}
-					else if (left_type == _CHAR)
-					{
-						Res.push_back(left_c == right_c);
+						if (left_type == _INT)
+						{
+							Res.push_back(left_i == right_i);
+						}
+						else if (left_type == _DOUBLE)
+						{
+							Res.push_back(left_d == right_d);
+						}
+						else if (left_type == _CHAR)
+						{
+							Res.push_back(left_c == right_c);
+						}
 					}
 				}
 				break;

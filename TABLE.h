@@ -30,9 +30,11 @@ public:
 	void Update(std::string aname, double avalue, std::string condition);									  //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
 	const std::vector<int> &Select(const std::vector<std::string> &col_name, std::string condition);		  //查找符合条件语句(whereclause)的行，并将行下标储存在vector里面
 	void show_output_from_select(const std::vector<std::string> &col_name, const std::vector<int> &outorder); //将查找到的符合条件语句的行按要求输出
+	void show_output_from_col(const std::string& colname, const std::vector<int>& outorder, int k);    //输出colname列，outorder这个vector中下标为k的项对应的行对应单元格内的数据
 	void Delete(std::string condition);																		  //删除符合条件语句的行
 	DataType GetType(std::string name);																		  //获得列name的类型
-	bool Judge(std::string condition, int k);																  //功能：接收whereclause语句，一个整数行标（从0到行数-1），输出bool,判断此行是否满足语句的条件
+	bool Judge(std::string condition, int k);
+	std::string Get_KeyColumn();																  //功能：接收whereclause语句，一个整数行标（从0到行数-1），输出bool,判断此行是否满足语句的条件
 
 	~TABLE()
 	{
@@ -46,7 +48,7 @@ public:
 	}
 	void UpdateRow();								 //更新行数
 	bool MyCompare(int a, int b, std::string cname); //比较cname列的第a+1与b+1位数据的大小
-	std::vector<std::string> &GetColumnName()
+	const std::vector<std::string> &GetColumnName()
 	{ //获得各列的名字
 		return ColumnName;
 	}
@@ -59,6 +61,7 @@ public:
 	void Select_Order(const std::vector<std::string> &col_name,const std::string &order_col);
 	void write_into_outfile(const std::string& out_file_name, const std::vector<int>& outorder, const std::vector<std::string>& col_name);//输出到目标文件
 	void load_data_from_file(const std::string& in_file_name, const std::vector<std::string>& col_name);
+	void bubble_sort(std::vector<int>&order);//按照关键列对行下标的vector进行冒泡排序
 };
 
 inline void split(const std::string &s, std::vector<std::string> &sv, const char flag = ' '); //分割字符串

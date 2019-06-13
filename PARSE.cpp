@@ -389,6 +389,9 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name, ... ORDER BY ...; (这里ORDER只能作用于GROUP的列或者COUNT）
 	{
 		std::vector<std::string> col_name;
+		std::vector<std::string> tb_name;
+		std::vector<std::string> col_tb_name;
+		std::vector<std::string> col_2_name;
 		col_name.clear();
 		string ele2, ele2_upper;
 		int chk = 0;				 //1代表正常SELECT，2代表需要输出到文件（出现“INTO”）,3代表……
@@ -396,9 +399,9 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		while (chk == 0)
 		{
 			string input_upper;
-			Transform(input,input_upper);
+			Transform(input, input_upper);
 			/**再加两个判断，防止影响后面**/
-			if(input_upper.find(" FROM ")==-1 && input_upper.find(" INTO ")==-1&&(input_upper.find("+")!=-1 || input_upper.find("-")!=-1 || input_upper.find("*")!=-1 || input_upper.find("/")!=-1 || input_upper.find("%")!=-1 || input_upper.find(" DIV ")!=-1 || input_upper.find(" MOD ")!=-1))
+			if (input_upper.find(" FROM ") == -1 && input_upper.find(" INTO ") == -1 && (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("*") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1))
 			{
 				stringstream iss(input_upper); //读进来作计算器处理
 				string select;
@@ -424,7 +427,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 					chk = 1;
 					break;
 				}
-				if (ele2_upper == "INTO")
+				else if (ele2_upper == "INTO")
 				{
 					chk = 2;
 					break;
@@ -438,83 +441,230 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		//现在有两种情况：第一种：读到了FROM，没有INTO，第二种，读到了INTO，FROM还在后面
 		if (chk == 1) //第一种情况，读到了FROM，证明没有INTO
 		{
-			string tbname;
-			is >> tbname;
-			if (tbname[tbname.length() - 1] == ';') //表名后直接是分号，代表没有whereclause
+			tb_name.clear();
+			string tbname, tbname_upper;
+			do
 			{
-				has_whereclause = false;
-				tbname = tbname.substr(0, tbname.length() - 1);
-			}
-			for (auto it = curDb->DataBaseMap.begin(); it != curDb->DataBaseMap.end(); it++)
-			{
-				if (it->first == tbname)
-				{
-					curTb = it->second;
+				is >> tbname;
+				if (tbname[tbname.length() - 1] == ',')
+					tbname = tbname.substr(0, tbname.length() - 1);
+				while (tbname[0] == ' ')
+					tbname = tbname.substr(1);
+				while (tbname[tbname.length() - 1] == ' ')
+					tbname = tbname.substr(0, tbname.length() - 1);
+				tbname_upper = "";
+				Transform(tbname, tbname_upper);
+				if (tbname_upper == "WHERE" || tbname_upper == "GROUP" || tbname[tbname.length() - 1] == ';')
 					break;
-				}
-				if (it == curDb->DataBaseMap.end())
-					cout << "CAN NOT FIND TABLENAME" << tbname << endl;
-			}						   //利用ele3里面的TBNAME找对应表的指针,其实有函数可以用hhh
-			string condition = "true"; //condition缺省为“true”，供无whereclause语句时使用
-			if (has_whereclause)
-			{
-				string condition_upper = "";
-				is >> condition; //先把后一个要么是where要么是group的串读进condition
-				Transform(condition, condition_upper);
-				if (condition_upper == "WHERE") //如果是where，证明是一个输出的语句，按正常情况操作
+				else
 				{
-					condition = "";
-					getline(is, condition, ';');						//把whereclause读进condition进行后续操作
-					auto outorder = curTb->Select(col_name, condition); //处理，找到符合条件的行存入outorder静态vector
-					curTb->show_output_from_select(col_name, outorder); //把符合条件的每一行输出
+					tb_name.push_back(tbname);
 				}
-				else if (condition_upper == "GROUP") //如果读到了group
-				{
-					is >> condition;		  //读入by,接下来是GROUP要作用的列名
-					vector<string> group_col; //储存GROUP作用的列名
-					bool has_order = true;	//是否含有ORDER语句
-					string _group;
-					is >> _group;
-					while (_group[_group.length() - 1] == ',')
-					{
-						group_col.push_back(_group.substr(0, _group.length() - 1));
-						is >> _group;
-					}
-					if (_group[_group.length() - 1] == ';') //如果直接分号结束，说明没有ORDER语句
-					{
-						has_order = false;
-						group_col.push_back(_group.substr(0, _group.length() - 1));
-					}
-					else
-						group_col.push_back(_group);
-					curTb->classify(group_col);
+			} while (tbname_upper != "WHERE" && tbname_upper != "GROUP" && tbname[tbname.length() - 1] != ';');
+			//先一直输入的是表名，直到读到"WHERE","GROUP"或者到达末尾为止
 
-					if (has_order) //如果有ORDER
+			if (tbname[tbname.length() - 1] == ';')
+			{
+				tbname = tbname.substr(0, tbname.length() - 1);
+				tb_name.push_back(tbname);
+				has_whereclause = false;
+			} //如果是读到语句结尾的话，证明没有where或者group
+
+			if (tb_name.size() == 1) //如果是单表
+			{
+				string tbname = tb_name[0];
+				for (auto it = curDb->DataBaseMap.begin(); it != curDb->DataBaseMap.end(); it++)
+				{
+					if (it->first == tbname)
 					{
-						for (int i = 0; i < col_name.size(); i++)
-							cout << col_name[i] << "\t";
-						cout << endl;
-						curTb->Select_Group(col_name, has_order);
-						string order_col;
-						is >> order_col; //读入ORDER
-						is >> order_col; //读入BY
-						is >> order_col;
-						order_col = order_col.substr(0, order_col.size() - 1);
-						curTb->Select_Order(col_name, order_col);
+						curTb = it->second;
+						break;
 					}
-					else
+					if (it == curDb->DataBaseMap.end())
+						cout << "CAN NOT FIND TABLENAME" << tbname << endl;
+				}						   //利用ele3里面的TBNAME找对应表的指针,其实有函数可以用hhh
+				string condition = "true"; //condition缺省为“true”，供无whereclause语句时使用
+				if (has_whereclause)	   //如果有where或者group
+				{
+					if (tbname_upper == "WHERE") //如果是where，证明是一个输出的语句，按正常情况操作
 					{
-						for (int i = 0; i < col_name.size(); i++)
-							cout << col_name[i] << "\t";
-						cout << endl;
-						curTb->Select_Group(col_name, has_order);
+						condition = "";
+						getline(is, condition, ';');						//把whereclause读进condition进行后续操作
+						auto outorder = curTb->Select(col_name, condition); //处理，找到符合条件的行存入outorder静态vector
+						curTb->show_output_from_select(col_name, outorder); //把符合条件的每一行输出
 					}
+					else if (tbname_upper == "GROUP") //如果读到了group
+					{
+						is >> condition;		  //读入by,接下来是GROUP要作用的列名
+						vector<string> group_col; //储存GROUP作用的列名
+						bool has_order = true;	//是否含有ORDER语句
+						string _group;
+						is >> _group;
+						while (_group[_group.length() - 1] == ',')
+						{
+							group_col.push_back(_group.substr(0, _group.length() - 1));
+							is >> _group;
+						}
+						if (_group[_group.length() - 1] == ';') //如果直接分号结束，说明没有ORDER语句
+						{
+							has_order = false;
+							group_col.push_back(_group.substr(0, _group.length() - 1));
+						}
+						else
+							group_col.push_back(_group);
+						curTb->classify(group_col);
+
+						if (has_order) //如果有ORDER
+						{
+							for (int i = 0; i < col_name.size(); i++)
+								cout << col_name[i] << "\t";
+							cout << endl;
+							curTb->Select_Group(col_name, has_order);
+							string order_col;
+							is >> order_col; //读入ORDER
+							is >> order_col; //读入BY
+							is >> order_col;
+							order_col = order_col.substr(0, order_col.size() - 1);
+							curTb->Select_Order(col_name, order_col);
+						}
+						else
+						{
+							for (int i = 0; i < col_name.size(); i++)
+								cout << col_name[i] << "\t";
+							cout << endl;
+							curTb->Select_Group(col_name, has_order);
+						}
+					}
+				}
+				else //没有whereclause，全部输出
+				{
+					auto outorder = curTb->Select(col_name, "true");
+					curTb->show_output_from_select(col_name, outorder);
 				}
 			}
-			else //没有whereclause，全部输出
+			else if (tb_name.size() == 0)
+				cout << "Invalid input : expect a tablename." << endl;
+			else if (tb_name.size() > 2) //不支持三个及以上的表
+				cout << "This version doe not support whereclause between three or more tables, please check again." << endl;
+			else //两个表
 			{
-				auto outorder = curTb->Select(col_name, "true");
-				curTb->show_output_from_select(col_name, outorder);
+				if (col_name[0] == "*")
+				{
+					col_name.clear();
+					TABLE *ptb = curDb->GetTable(tb_name[0]);
+					TABLE *ptb2 = curDb->GetTable(tb_name[1]);
+					for (int i = 0; i < ptb->GetColumnName().size(); i++)
+					{
+						string combine = tb_name[0] + "." + ptb->GetColumnName()[i];
+						col_name.push_back(combine);
+					}
+					for (int i = 0; i < ptb2->GetColumnName().size(); i++)
+					{
+						string combine = tb_name[1] + "." + ptb2->GetColumnName()[i];
+						col_name.push_back(combine);
+					}
+				}
+				for (int i = 0; i < col_name.size(); i++)
+					cout << col_name[i] << "\t";
+				cout << endl; //表头
+
+				TABLE *ptb = curDb->GetTable(tb_name[0]);
+				ptb->UpdateRow();
+				std::vector<int> first_order;
+				for (int i = 0; i < ptb->GetRowNum(); i++)
+				{
+					first_order.push_back(i);
+				}
+				ptb->bubble_sort(first_order); //排序，按照主键顺序一个个排好
+				string condition = "true";
+				for (int i = 0; i < col_name.size(); i++)
+				{
+					if (col_name[i].find('.') == -1 && col_name[i] != "*")
+					{
+						cout << "Invalid input : expect mark '.' between tablename and column name, found in"
+							 << "\"" << col_name[i] << "\"" << endl;
+						break;
+					}
+					int pos = col_name[i].find('.');
+					std::string coltbname = col_name[i].substr(0, pos);
+					col_name[i] = col_name[i].substr(pos + 1);
+					col_tb_name.push_back(coltbname);
+				} //切割（表名.列名）并分别存于col_tb_name和col_name
+				for (int i = 0; i < col_name.size(); i++)
+				{
+					if (col_tb_name[i] == tb_name[1])
+					{
+						col_2_name.push_back(col_name[i]);
+					}
+				} //把属于第二个表的列名字加进向量col_2_name;
+
+				if (has_whereclause) //如果有whereclause
+				{
+					if (tbname_upper == "WHERE") //如果输入合法
+					{
+						condition = "";
+						getline(is, condition, ';'); //把whereclause读进condition进行后续操作
+						while (condition[0] == ' ')
+						{
+							condition = condition.substr(1);
+						}
+						TABLE *ptb2 = curDb->GetTable(tb_name[1]);
+
+						for (int i = 0; i < ptb->GetRowNum(); i++) //遍历第一个表里面的每一行
+						{
+							string c_condition = constify(condition, tb_name, ptb, first_order[i], first_order, col_name, col_tb_name);
+							auto outorder = ptb2->Select(col_2_name, c_condition);
+							for (int rnd = 0; rnd < outorder.size(); rnd++) //对于第二个表中每一个符合要求的行都要输出一行
+							{
+								for (int j = 0; j < col_name.size(); j++) //每一列进行输出
+								{
+									if (col_tb_name[j] == tb_name[0])
+									{
+										ptb->show_output_from_col(col_name[j], first_order, i);
+									}
+									else if (col_tb_name[j] == tb_name[1])
+									{
+										ptb2->show_output_from_col(col_name[j], outorder, rnd);
+									}
+								}
+								cout << endl;
+							}
+						}
+						/*auto outorder = curTb->Select(col_name, condition); //处理，找到符合条件的行存入outorder静态vector
+						curTb->show_output_from_select(col_name, outorder); //把符合条件的每一行输出*/
+					}
+					else //多表只实现where,不再支持group
+					{
+						cout << "Invalid input : expect \"WHERE\" here but not found." << endl;
+					}
+				}
+
+				else //没有whereclause，全部输出
+				{
+					TABLE *ptb = curDb->GetTable(tb_name[0]);
+					TABLE *ptb2 = curDb->GetTable(tb_name[1]);
+					auto outorder = ptb2->Select(col_2_name, "true");
+					for (int i = 0; i < ptb->GetRowNum(); i++) //遍历第一个表里面的每一行
+					{
+						string c_condition = constify(condition, tb_name, ptb, first_order[i], first_order, col_name, col_tb_name);
+						auto outorder = ptb2->Select(col_2_name, condition);
+						for (int rnd = 0; rnd < outorder.size(); rnd++) //对于第二个表中每一个符合要求的行都要输出一行
+						{
+							for (int j = 0; j < col_name.size(); j++) //每一列进行输出
+							{
+								if (col_tb_name[j] == tb_name[0])
+								{
+									ptb->show_output_from_col(col_name[j], first_order, i);
+								}
+								else if (col_tb_name[j] == tb_name[1])
+								{
+									ptb2->show_output_from_col(col_name[j], outorder, rnd);
+								}
+							}
+							cout << endl;
+						}
+					}
+				}
 			}
 		}
 		else if (chk == 2) //SELECT * INTO OUTFILE 'output_file' FROM oop_info WHERE whereclause;
@@ -770,4 +920,61 @@ string PARSE::arithmetic_calculator(string &whole_expression)
 		cout << "numbers.top(): " << numbers.top() << endl;*/
 	}
 	return to_string(numbers.top());
+}
+
+std::string PARSE::constify(std::string condition, const std::vector<std::string> &tbname, TABLE *ptb, int line_num, const std::vector<int> outorder, const std::vector<std::string> &col_name, const std::vector<std::string> &col_tb_name)
+{
+	string front = "";
+	int t = 0;
+	int pos = 10000;
+	while (pos != -1)
+	{
+		pos = condition.find('.');
+		if (pos == -1)
+			break;
+		string left = condition.substr(0, pos);
+		string right = condition.substr(pos + 1);
+		if (left.substr(left.length() - tbname[0].length()) == tbname[0]) //如果是第一个表
+		{
+			TABLE *ptb = curDb->GetTable(tbname[0]);
+			auto COLNM = ptb->GetColumnName();	 //这是一个名为tbname[0]的table里面储存各列名字的vector的常量引用
+			for (int i = 0; i < COLNM.size(); i++) //遍历需要查找的每一列
+			{
+				if (right.length() < COLNM[i].length())
+					continue;										//如果长度关系不对就肯定不是这一列
+				if (right.substr(0, COLNM[i].length()) == COLNM[i]) //如果这个列符合要求
+				{
+					string mid = "";
+					left = left.substr(0, left.length() - tbname[0].length());
+					right = right.substr(COLNM[i].length()); //切割左右字符串，把表名和列名都切掉（点在上面截left和right的时候已经切掉了）
+
+					if (ptb->GetType(COLNM[i]) == _INT)
+					{
+						mid = to_string(ptb->TableMap[COLNM[i]]->Get_INT_Value(line_num));
+					}
+					else if (ptb->GetType(COLNM[i]) == _DOUBLE)
+					{
+						mid = to_string(ptb->TableMap[COLNM[i]]->Get_DOUBLE_Value(line_num));
+					}
+					else if (ptb->GetType(COLNM[i]) == _CHAR)
+					{
+						mid = "   "; //三个空格
+						mid[0] = '\"';
+						mid[2] = '\"';
+						mid[1] = ptb->TableMap[COLNM[i]]->Get_CHAR_Value(line_num);
+					}
+					condition = left + mid + right;
+					ptb = nullptr;
+					break;
+				}
+			}
+		}
+		else if (left.substr(left.length() - tbname[1].length()) == tbname[1]) //这个时候只需要切掉表名和点就可以了
+		{
+			left = left.substr(0, left.length() - tbname[1].length());
+			condition = left + right;
+		}
+	}
+	/* cout << "after constify: " << condition << endl;*/
+	return condition;
 }

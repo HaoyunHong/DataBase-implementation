@@ -1,0 +1,21 @@
+grade   girls
+0       c
+88      a
+90      a
+95      a
+100     b
+life1.girls     life2.eat
+a       500
+a       200
+a       99
+a       100
+a       500
+a       200
+a       99
+a       100
+a       500
+a       200
+a       99
+a       100
+life1.grade     life1.girls     life2.gpa       life2.prize     life2.eat
+100     b       4.0000  20000   100
