@@ -274,18 +274,39 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			DataType type = curTb->GetType(*ita);
 			if (type == 0)
 			{
-				int val = stoi(*itv);
-				curTb->Insert(*ita, val);
+				if (*itv == "NULL")
+				{
+					curTb->InsertNull(*ita, _INT);
+				}
+				else
+				{
+					int val = stoi(*itv);
+					curTb->Insert(*ita, val);
+				}
 			}
 			else if (type == 2)
 			{
-				char val = (*itv)[0];
-				curTb->Insert(*ita, val);
+				if (*itv == "NULL")
+				{
+					curTb->InsertNull(*ita, _CHAR);
+				}
+				else
+				{
+					char val = (*itv)[0];
+					curTb->Insert(*ita, val);
+				}
 			}
 			else if (type == 1)
 			{
-				double val = stod(*itv);
-				curTb->Insert(*ita, val);
+				if (*itv == "NULL")
+				{
+					curTb->InsertNull(*ita, _DOUBLE);
+				}
+				else
+				{
+					double val = stod(*itv);
+					curTb->Insert(*ita, val);
+				}
 			}
 		}
 		if (!alcl.empty()) //未输入列判断及处理
@@ -375,43 +396,42 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		while (chk == 0)
 		{
 			string input_upper;
-			Transform(input,input_upper);
-			if(input_upper.find("+")!=-1 || input_upper.find("-")!=-1 || input_upper.find("*")!=-1 || input_upper.find("/")!=-1 || input_upper.find("%")!=-1 || input_upper.find(" DIV ")!=-1 || input_upper.find(" MOD ")!=-1)
+			Transform(input, input_upper);
+			if (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1)
 			{
-				stringstream iss(input_upper);//读进来作计算器处理
+				stringstream iss(input_upper); //读进来作计算器处理
 				string select;
 				iss >> select;
 				string whole_expression = input_upper.substr(6);
 				whole_expression = whole_expression_standardize(whole_expression);
-				cout<<whole_expression<<endl;
+				cout << whole_expression << endl;
 				string num_result = arithmetic_calculator(whole_expression);
-				cout << setprecision(3) << num_result << endl;//保留三位有效数字
+				cout << setprecision(3) << num_result << endl; //保留三位有效数字
 				break;
 			}
 			else
 			{
 				is >> ele2;
-			if (ele2[ele2.length() - 1] == ',')
-			{
-				ele2 = ele2.substr(0, ele2.length() - 1);
-			} //如果是逗号，去掉
-			ele2_upper = "";
-			Transform(ele2, ele2_upper);
-			if (ele2_upper == "FROM")
-			{
-				chk = 1;
-				break;
-			}
-			if (ele2_upper == "INTO")
-			{
-				chk = 2;
-				break;
-			}
-			else //正在读入的还是一个列名
-			{
-				col_name.push_back(ele2);
-			}
-
+				if (ele2[ele2.length() - 1] == ',')
+				{
+					ele2 = ele2.substr(0, ele2.length() - 1);
+				} //如果是逗号，去掉
+				ele2_upper = "";
+				Transform(ele2, ele2_upper);
+				if (ele2_upper == "FROM")
+				{
+					chk = 1;
+					break;
+				}
+				if (ele2_upper == "INTO")
+				{
+					chk = 2;
+					break;
+				}
+				else //正在读入的还是一个列名
+				{
+					col_name.push_back(ele2);
+				}
 			}
 		}
 		//现在有两种情况：第一种：读到了FROM，没有INTO，第二种，读到了INTO，FROM还在后面
@@ -499,119 +519,119 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		else if (chk == 2) //SELECT * INTO OUTFILE 'output_file' FROM oop_info WHERE whereclause;
 		{
 			string ele0, out_file_name, tbname;
-			string condition = "true";//模仿上面的操作，缺省值供没有whereclause时使用
-			bool has_whereclause = true;//指示是否存在whereclause
-			is >> ele0; //输入"OUTFILE"
-			is >> out_file_name;//输出文件名
+			string condition = "true";   //模仿上面的操作，缺省值供没有whereclause时使用
+			bool has_whereclause = true; //指示是否存在whereclause
+			is >> ele0;					 //输入"OUTFILE"
+			is >> out_file_name;		 //输出文件名
 			if (out_file_name[0] == '\'' || out_file_name[0] == '\"')
 				out_file_name = out_file_name.substr(1, out_file_name.length() - 1);
 			if (out_file_name[out_file_name.length() - 1] == '\'' || out_file_name[out_file_name.length() - 1] == '\"')
 				out_file_name = out_file_name.substr(0, out_file_name.length() - 1); //去掉引号
-			is >> ele0;//输入"FROM"
-			is >> tbname;//表名
-			if(tbname[tbname.length() - 1] == ';')
+			is >> ele0;																 //输入"FROM"
+			is >> tbname;															 //表名
+			if (tbname[tbname.length() - 1] == ';')
 			{
 				tbname = tbname.substr(0, tbname.length() - 1);
 				has_whereclause = false;
-			}//没有whereclause，输出全部行
+			}								 //没有whereclause，输出全部行
 			curTb = curDb->GetTable(tbname); //切换当前表
-			if(has_whereclause)
+			if (has_whereclause)
 			{
-				is >> ele0;//输入"WHERE"
+				is >> ele0; //输入"WHERE"
 				condition = "";
-				getline(is, condition, ';');//读入condition
+				getline(is, condition, ';'); //读入condition
 			}
-			auto outorder = curTb->Select(col_name, condition);//outorder储存了需要输出的行的下标
+			auto outorder = curTb->Select(col_name, condition); //outorder储存了需要输出的行的下标
 			curTb->write_into_outfile(out_file_name, outorder, col_name);
 		}
 	}
 
-	else if(ele1 == "LOAD")//LOAD DATA INFILE 'dump.txt' INTO TABLE mytbl(b, c, a);
+	else if (ele1 == "LOAD") //LOAD DATA INFILE 'dump.txt' INTO TABLE mytbl(b, c, a);
 	{
 		string ele0, ele0_upper, file_name, tbname, colname;
-		is >> ele0;//"DATA"
+		is >> ele0; //"DATA"
 		ele0_upper = "";
- 		Transform(ele0, ele0_upper);
-		if(ele0_upper != "DATA")
+		Transform(ele0, ele0_upper);
+		if (ele0_upper != "DATA")
 		{
 			cout << ele0_upper << endl;
 			cout << "invalid command :: expect \"DATA\" here but not found.";
 			return;
 		}
-		is >> ele0;//"INFILE"
+		is >> ele0; //"INFILE"
 		ele0_upper = "";
 		Transform(ele0, ele0_upper);
-		if(ele0_upper == "LOCAL")
+		if (ele0_upper == "LOCAL")
 		{
 			is >> ele0;
 			ele0_upper = "";
 			Transform(ele0, ele0_upper);
 		}
-		if(ele0_upper != "INFILE")
+		if (ele0_upper != "INFILE")
 		{
 			cout << "invalid command :: expect \"INFILE\" here but not found." << endl;
 			return;
 		}
 		is >> file_name;
-		if(file_name[0] == '\'' || file_name[0] == '\"')
+		if (file_name[0] == '\'' || file_name[0] == '\"')
 		{
 			file_name = file_name.substr(1, file_name.length() - 1);
 		}
-		if(file_name[file_name.length() - 1] == '\'' || file_name[file_name.length() - 1] == '\"')
+		if (file_name[file_name.length() - 1] == '\'' || file_name[file_name.length() - 1] == '\"')
 		{
 			file_name = file_name.substr(0, file_name.length() - 1);
-		}//去掉引号
-		is >> ele0;//"INTO"
+		}			//去掉引号
+		is >> ele0; //"INTO"
 		ele0_upper = "";
 		Transform(ele0, ele0_upper);
-		if(ele0_upper != "INTO")
+		if (ele0_upper != "INTO")
 		{
 			cout << "invalid command :: expect \"INTO\" here but not found.";
 			return;
 		}
-		is >> ele0;//"TABLE"
+		is >> ele0; //"TABLE"
 		ele0_upper = "";
 		Transform(ele0, ele0_upper);
-		if(ele0_upper != "TABLE")
+		if (ele0_upper != "TABLE")
 		{
 			cout << "invalid command :: expect \"TABLE\" here but not found.";
 			return;
 		}
-		getline(is, tbname, ';');		
-		while(tbname[0] == ' ')
+		getline(is, tbname, ';');
+		while (tbname[0] == ' ')
 		{
 			tbname = tbname.substr(1, tbname.length() - 1);
-		}//要记得把最前面的空格去掉
-		std::vector<std::string>col_name;
+		} //要记得把最前面的空格去掉
+		std::vector<std::string> col_name;
 		col_name.clear();
-		bool chk = true;//指示是否没有对输入列作要求
-		if(tbname[tbname.length() - 1] == ')')
+		bool chk = true; //指示是否没有对输入列作要求
+		if (tbname[tbname.length() - 1] == ')')
 		{
 			int pos = tbname.find('(');
 			string col;
-			string col_list = tbname.substr(pos + 1, tbname.length() - pos - 1);//去掉了括号，只含由逗号分隔开的列名
-			while(col_list.find(',') != -1)
+			string col_list = tbname.substr(pos + 1, tbname.length() - pos - 1); //去掉了括号，只含由逗号分隔开的列名
+			while (col_list.find(',') != -1)
 			{
 				pos = col_list.find(',');
 				col = col_list.substr(0, pos);
 				col_list = col_list.substr(pos + 2);
 				col_name.push_back(col);
 			}
-			if(col_list[col_list.length() - 1] == ')')
+			if (col_list[col_list.length() - 1] == ')')
 			{
 				col_list = col_list.substr(0, col_list.length() - 1);
 			}
-			if(col_list.length() != 0)
+			if (col_list.length() != 0)
 				col_name.push_back(col_list);
 			tbname = tbname.substr(0, tbname.find('('));
 			chk = false;
-		}//有输入顺序的要求
+		} //有输入顺序的要求
 
 		curTb = curDb->GetTable(tbname);
 		curTb->UpdateRow();
-		if(chk)//如果对输入列没有要求，只有表名，就把每一列的名字都放进col_name里面去
+		if (chk) //如果对输入列没有要求，只有表名，就把每一列的名字都放进col_name里面去
 		{
-			for(int i = 0; i < curTb->GetColumnName().size(); i++)
+			for (int i = 0; i < curTb->GetColumnName().size(); i++)
 			{
 				col_name.push_back(curTb->GetColumnName()[i]);
 			}
@@ -625,7 +645,7 @@ string PARSE::whole_expression_standardize(string whole_expression)
 	string copy_whole_expression = whole_expression + ";";
 	int length = whole_expression.length();
 	int i = 1;
-	while (i< copy_whole_expression.length() && copy_whole_expression[i] != ':')
+	while (i < copy_whole_expression.length() && copy_whole_expression[i] != ':')
 	{
 		if (copy_whole_expression[i] == '+' || copy_whole_expression[i] == '-' || copy_whole_expression[i] == '*' || copy_whole_expression[i] == '/' || copy_whole_expression[i] == '%')
 		{
@@ -637,16 +657,16 @@ string PARSE::whole_expression_standardize(string whole_expression)
 			i++;
 		}
 	}
-	return copy_whole_expression.substr(0,i-1);
+	return copy_whole_expression.substr(0, i - 1);
 }
 
-int PARSE::P(string arithmetic_operator)//制定运算符优先级
+int PARSE::P(string arithmetic_operator) //制定运算符优先级
 {
 	if (arithmetic_operator == "+" || arithmetic_operator == "-")
 	{
 		return 1;
 	}
-	if (arithmetic_operator == "*" || arithmetic_operator == "/"|| arithmetic_operator == "DIV" || arithmetic_operator == "%"|| arithmetic_operator == "MOD")
+	if (arithmetic_operator == "*" || arithmetic_operator == "/" || arithmetic_operator == "DIV" || arithmetic_operator == "%" || arithmetic_operator == "MOD")
 	{
 		return 2;
 	}
@@ -658,11 +678,11 @@ int PARSE::P(string arithmetic_operator)//制定运算符优先级
 }
 
 //算数计算器
-string PARSE::arithmetic_calculator(string& whole_expression)
+string PARSE::arithmetic_calculator(string &whole_expression)
 {
-	istringstream s(whole_expression+" # ");//"#"表示算术表达式结束
-	std::stack<string> arithmetic_operators;//运算符栈
-	std::stack<double> numbers;//数据栈
+	istringstream s(whole_expression + " # "); //"#"表示算术表达式结束
+	std::stack<string> arithmetic_operators;   //运算符栈
+	std::stack<double> numbers;				   //数据栈
 	arithmetic_operators.push("#");
 	string arithmetic;
 	bool used = true;
@@ -679,7 +699,7 @@ string PARSE::arithmetic_calculator(string& whole_expression)
 			//cout << "temp_numbers.top(): " << numbers.top() << endl;
 			continue;
 		}
-	
+
 		else
 		{
 			if (P(arithmetic_operators.top()) < P(arithmetic))
@@ -721,24 +741,22 @@ string PARSE::arithmetic_calculator(string& whole_expression)
 					string number2_upper = to_string(number2);
 					//？？？不知为何，这里编译器识别不出来
 					//Transform(to_string(number2),number2_upper);
-					if (number2_upper== "NULL")
+					if (number2_upper == "NULL")
 					{
 						return "NULL";
 					}
 					numbers.push(number1 / number2);
-
 				}
 				if (op == "%" || op == "MOD")
 				{
 					string number2_upper = to_string(number2);
 					//Transform(to_string(number2),number2_upper);
-					if (number2_upper== "NULL")
+					if (number2_upper == "NULL")
 					{
 						return "NULL";
 					}
 					numbers.push(int(number1) % int(number2));
 				}
-
 			}
 		}
 		/*if (arithmetic == "#" && arithmetic_operators.top() == "#")
@@ -749,7 +767,6 @@ string PARSE::arithmetic_calculator(string& whole_expression)
 		}
 		cout << "arithmetic_operators.top(): " << arithmetic_operators.top() << endl;
 		cout << "numbers.top(): " << numbers.top() << endl;*/
-		
 	}
 	return to_string(numbers.top());
 }

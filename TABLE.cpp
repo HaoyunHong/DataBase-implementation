@@ -370,7 +370,7 @@ void TABLE::show_output_from_select(const std::vector<std::string> &col_name, co
 	{
 		cout << col_name[0] << endl;
 		string expression = col_name[0].substr(6, col_name[0].length() - 7);
-		cout << this->Count(expression) << "\t";
+		cout << this->Count(expression) << endl;
 	}
 	else
 	{
@@ -669,6 +669,10 @@ bool TABLE::Judge(string condition, int k)
 				string Symbol = Con[i].substr(p, 1);
 				string left_side = Con[i].substr(0, p);
 				string right_side = Con[i].substr(p + 1, Con[i].size());
+				if(left_side[0] == '\"')left_side = left_side.substr(1);
+				if(left_side[left_side.length() - 1] == '\"')left_side = left_side.substr(0, left_side.length() - 1);
+				if(right_side[0] == '\"')right_side = right_side.substr(1);
+				if(right_side[right_side.length() - 1] == '\"')right_side = right_side.substr(0, right_side.length() - 1);
 				int left_index = -1, right_index = -1; //如果这两个东西之后某一个还是-1，代表对应的那一端是常数
 				int left_i, right_i;
 				double left_d, right_d;
@@ -833,7 +837,8 @@ bool TABLE::Judge(string condition, int k)
 	//至此Res和Sym中分别按顺序存放bool值和逻辑运算符AND OR XOR
 	//由于AND优先级大于OR 先计算所有AND
 
-	//问题都在下面
+	/* for(int i = 0; i < Res.size(); i++)cout << "Res[" << i << "] = " << Res[i] << endl;
+	for(int i = 0; i < Sym.size(); i++)cout << "Sym[" << i << "] = " << Sym[i] << endl;*/
 
 	for (int i = 0; i < Sym.size(); i++)
 	{
