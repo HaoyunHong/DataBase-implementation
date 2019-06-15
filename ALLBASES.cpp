@@ -1,4 +1,6 @@
 #include "ALLBASES.h"
+#include <iostream>
+#include <fstream>
 using namespace std;
 
 DATABASE *ALLBASES::GetDB(string name)
@@ -14,7 +16,7 @@ DATABASE *ALLBASES::GetDB(string name)
 void ALLBASES::create(string dbname)
 { //建立新数据库
 	DBName.push_back(dbname);
-	AllBasesMap.insert(make_pair(dbname, new DATABASE));
+	AllBasesMap.insert(make_pair(dbname, new DATABASE(dbname)));
 	return;
 }
 
@@ -45,4 +47,43 @@ void ALLBASES::show()
 		std::cout << *it << std::endl;
 	}
 	return;
+}
+
+const std::vector<std::string> &ALLBASES::Get_DBName()
+{
+	return DBName;
+}
+
+void ALLBASES::create_allbases_file() //存档，将allbases类里面每个数据库的名字存到一个文件里面去
+{
+	ofstream fst("index.txt");
+	int h = DBName.size();
+	fst << h;
+	fst << "\n";
+	for (int i = 0; i < DBName.size(); i++)
+		fst << DBName[i] << "\n";
+	fst.close();
+
+	for (int i = 0; i < DBName.size(); i++)
+	{
+		AllBasesMap[DBName[i]]->create_database_file();
+	}
+}
+
+void ALLBASES::load_all_databases()
+{
+	fstream fst;
+	fst.open("index.txt"); //默认把总管文件命名为index.txt
+	int database_num;
+	fst >> database_num;
+	std::string dbname;//反复输入这一个字符串遍历所有数据库名
+	fst.get();
+	for(int i = 0; i < database_num; i++)
+	{
+		getline(fst, dbname);
+		create(dbname);   //建立名为dbname的新数据库
+	}
+	fst.close();
+	for(int i = 0; i < DBName.size(); i++)
+		AllBasesMap[DBName[i]]->load_database();
 }

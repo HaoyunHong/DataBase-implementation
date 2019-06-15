@@ -133,161 +133,6 @@ std::string TABLE::Get_KeyColumn()
 	return KeyColumn;
 }
 
-/*void TABLE::Select(string name, string condition)
-{ //主要接口
-	//查找某些行并输出
-	this->UpdateRow();
-	if (name == "*")
-	{ //输出所有列
-		if (RowNum == 0)
-			return;
-		vector<int> outorder; //输出顺序
-		for (auto it = ColumnName.begin(); it < ColumnName.end(); ++it)
-		{
-			cout << *it << "\t";
-		}
-		cout << endl;
-		for (int j = 0; j < RowNum; j++)
-		{ //遍历所有行
-			if (Judge(condition, j))
-			{ //如果满足
-				outorder.push_back(j);
-			}
-		}
-		if (outorder.size() > 1)
-		{ //冒泡排序，按照主键顺序
-			for (int i = 0; i < (outorder.size() - 1); i++)
-			{
-				if (i >= (outorder.size() - 1))
-					break;
-				for (int j = 0; j < (outorder.size() - 1 - i); j++)
-				{
-					if (this->MyCompare(outorder[j + 1], outorder[j], KeyColumn))
-					{
-						int tmp = outorder[j + 1];
-						outorder[j + 1] = outorder[j];
-						outorder[j] = tmp;
-					}
-				}
-			}
-		}
-		//输出
-		for (int j = 0; j < outorder.size(); j++)
-		{ //遍历outorder
-			for (int i = 0; i < ColumnName.size(); i++)
-			{ //遍历所有列
-				if (ColumnType[i] == _INT)
-				{ //判断列的类型
-					auto tem = TableMap[ColumnName[i]];
-					if (tem->Get_IsNull(outorder[j]))
-						cout << "NULL\t";
-					else
-						cout << tem->Get_INT_Value(outorder[j]) << "\t";
-				}
-				else if (ColumnType[i] == _CHAR)
-				{
-					auto tem = TableMap[ColumnName[i]];
-					if (tem->Get_IsNull(outorder[j]))
-						cout << "NULL\t";
-					else
-						cout << tem->Get_CHAR_Value(outorder[j]) << "\t";
-				}
-				else if (ColumnType[i] == _DOUBLE)
-				{
-					auto tem = TableMap[ColumnName[i]];
-					if (tem->Get_IsNull(outorder[j]))
-						cout << "NULL\t";
-					else
-						cout << fixed << setprecision(4) << tem->Get_DOUBLE_Value(outorder[j]) << "\t";
-				}
-			}
-			cout << endl;
-		}
-	}
-	else
-	{						  //输出某一列
-		vector<int> outorder; //输出的行的行标顺序
-		auto it = TableMap.find(name);
-		if (it == TableMap.end())
-		{
-			cout << "Can not find " << name << endl;
-			return;
-		}
-		DataType CType = _INT;
-		for (int i = 0; i < ColumnName.size(); i++)
-		{
-			if (ColumnName[i] == it->first)
-			{
-				CType = ColumnType[i];
-			}
-		}
-		for (int j = 0; j < RowNum; j++)
-		{
-			if (Judge(condition, j))
-			{
-				outorder.push_back(j);
-			}
-		}
-		if (outorder.size() > 1)
-		{ //冒泡排序
-			for (int i = 0; i < (outorder.size() - 1); i++)
-			{
-				if (i >= (outorder.size() - 1))
-					break;
-				for (int j = 0; j < (outorder.size() - 1 - i); j++)
-				{
-					if (this->MyCompare(outorder[j + 1], outorder[j], KeyColumn))
-					{
-						int tmp = outorder[j + 1];
-						outorder[j + 1] = outorder[j];
-						outorder[j] = tmp;
-					}
-				}
-			}
-		}
-		if (outorder.size() > 0)
-		{ //输出
-			cout << name << endl;
-			auto pc = TableMap[name];
-			auto type = GetType(name);
-			if (type == _INT)
-			{
-				for (int j = 0; j < outorder.size(); j++)
-				{
-					if (pc->Get_IsNull(outorder[j]))
-						cout << "NULL\t";
-					else
-						cout << pc->Get_INT_Value(outorder[j]) << endl;
-					;
-				}
-			}
-			else if (type == _CHAR)
-			{
-				for (int j = 0; j < outorder.size(); j++)
-				{
-					if (pc->Get_IsNull(outorder[j]))
-						cout << "NULL\t";
-					else
-						cout << pc->Get_CHAR_Value(outorder[j]) << endl;
-					;
-				}
-			}
-			else if (type == _DOUBLE)
-			{
-				for (int j = 0; j < outorder.size(); j++)
-				{
-					if (pc->Get_IsNull(outorder[j]))
-						cout << "NULL\t";
-					else
-						cout << pc->Get_DOUBLE_Value(outorder[j]) << endl;
-					;
-				}
-			}
-		}
-	}
-	return;
-}*/
-
 const std::vector<int> &TABLE::Select(const std::vector<std::string> &col_name, string condition)
 { //主要接口,其实这里col_name没有用到
 	//查找某些行并输出
@@ -802,7 +647,7 @@ bool TABLE::Judge(string condition, int k)
 						{
 							right_c = TableMap[right_side]->Get_CHAR_Value(k);
 						}
-					}//处理不是常数的左/右端式子
+					} //处理不是常数的左/右端式子
 
 					if (left_index == -1)
 					{
@@ -1449,4 +1294,154 @@ void TABLE::load_data_from_file(const std::string &in_file_name, const std::vect
 	}
 	fin.close();
 	return;
+}
+
+void TABLE::create_table_file(const std::string &dbname)
+{
+	UpdateRow();
+	std::string filename;
+	filename = dbname + "." + name + ".txt";
+	std::ofstream fout;
+	fout.open(filename);
+	fout << ColumnName.size() << '\n'; //首先存总列数（空表就存0)
+	fout << RowNum << '\n';			   //再存行数
+	fout << KeyColumn << '\n';		   //再存一下primary key列的名字
+	for (int i = 0; i < ColumnName.size(); i++)
+	{
+		fout << ColumnName[i] << '\n';
+		switch (ColumnType[i])
+		{
+		case _INT:
+			fout << "_INT" << '\n';
+			break;
+		case _DOUBLE:
+			fout << "_DOUBLE" << '\n';
+			break;
+		case _CHAR:
+			fout << "_CHAR" << '\n';
+			break;
+		default:
+			break;
+		}
+	} //先存每一列的名字及类型，都由换行符分隔
+	//等下再存一下每一列的数据
+	for (int i = 0; i < ColumnName.size(); i++)
+	{
+		if (GetType(ColumnName[i]) == _INT)
+		{
+			UpdateRow();
+			for (int j = 0; j < RowNum; j++)
+			{
+				if (TableMap[ColumnName[i]]->Get_IsNull(j))
+					fout << "NULL" << '\t';
+				else
+					fout << TableMap[ColumnName[i]]->Get_INT_Value(j) << '\t';
+			}
+		}
+		else if (GetType(ColumnName[i]) == _DOUBLE)
+		{
+			UpdateRow();
+			for (int j = 0; j < RowNum; j++)
+			{
+				if (TableMap[ColumnName[i]]->Get_IsNull(j))
+					fout << "NULL" << '\t';
+				else
+					fout << fixed << setprecision(4) << TableMap[ColumnName[i]]->Get_DOUBLE_Value(j) << '\t';
+			}
+		}
+		else if (GetType(ColumnName[i]) == _CHAR)
+		{
+			UpdateRow();
+			for (int j = 0; j < RowNum; j++)
+			{
+				if (TableMap[ColumnName[i]]->Get_IsNull(j))
+					fout << "NULL" << '\t';
+				else
+					fout << TableMap[ColumnName[i]]->Get_INT_Value(j) << '\t';
+			}
+		}
+		fout << '\n';
+	}
+	fout.close();
+}
+
+void TABLE::load_table(const std::string &dbname)
+{
+	fstream fst;
+	string filename;
+	filename = dbname + "." + name + ".txt";
+	fst.open(filename);
+	int col_num, row_num;
+	vector<string> col_name;
+	vector<DataType> col_type;
+	string name, type, key;
+	fst >> col_num;
+	fst.get();
+	fst >> row_num;
+	fst.get();
+	fst >> key;
+	fst.get();
+	for (int i = 0; i < col_num; i++)
+	{
+		fst >> name;
+		fst >> type;
+		col_name.push_back(name);
+		if (type == "_INT")
+		{
+			addcolumn(name, _INT);
+			col_type.push_back(_INT);
+		}
+		else if (type == "_DOUBLE")
+		{
+			addcolumn(name, _DOUBLE);
+			col_type.push_back(_DOUBLE);
+		}
+		else if (type == "_CHAR")
+		{
+			addcolumn(name, _CHAR);
+			col_type.push_back(_CHAR);
+		}
+		fst.get();//换行符
+	}
+	SetKey(key);	
+
+	for (int i = 0; i < col_num; i++)
+	{
+		string data;
+		if (col_type[i] == _INT)
+		{
+			for (int j = 0; j < row_num; j++)
+			{
+				fst >> data;
+				if (data == "NULL")
+					TableMap[col_name[i]]->push_back_null(int(0));
+				else if(data != "")
+					TableMap[col_name[i]]->push_back(stoi(data));
+			}
+		}
+		else if (col_type[i] == _DOUBLE)
+		{
+			for (int j = 0; j < row_num; j++)
+			{
+				fst >> data;
+				if (data == "NULL")
+					TableMap[col_name[i]]->push_back_null(0.0);
+				else if(data != "")
+					TableMap[col_name[i]]->push_back(stod(data));
+			}
+		}
+		else if (col_type[i] == _CHAR)
+		{
+			for (int j = 0; j < row_num; j++)
+			{
+				fst >> data;
+				if (data == "NULL")
+					TableMap[col_name[i]]->push_back_null(char(0));
+				else if(data != "")
+					TableMap[col_name[i]]->push_back(data[0]);
+			}
+		}
+		fst.get();
+	}
+	fst.close();
 }

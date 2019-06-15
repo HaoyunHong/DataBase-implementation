@@ -1,0 +1,6 @@
+RELOAD;
+SHOW DATABASES;
+USE ijn;
+SHOW TABLES;
+SELECT * FROM nba;
+SELECT * FROM cba where team=1;

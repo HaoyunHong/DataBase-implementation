@@ -33,6 +33,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			string ele3;
 			getline(is, ele3, ';');
 			Allbases.create(ele3);
+			Allbases.create_allbases_file();
 		}
 		if (ele2 == "TABLE")
 		{
@@ -40,7 +41,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			tem.push_back(NOT_NULL);
 			string tbname, cur, cur0, curin, clname, ctype, ctype0; //变量涉及表名、当前读取字段、转换后字段、待存储字段、列名、列类型
 			getline(is, tbname, '(');
-			curTb = new TABLE;
+			curTb = new TABLE(tbname);
 			curDb->addtable(tbname, curTb);
 			getline(is, clname, ' ');
 			is >> ctype;
@@ -144,6 +145,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 					}
 				}
 			}
+			curDb->create_database_file();
 		}
 	}
 	else if (ele1 == "DROP")
@@ -156,12 +158,14 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			string ele3;
 			getline(is, ele3, ';');
 			Allbases.del(ele3);
+			Allbases.create_allbases_file();
 		}
 		if (ele2 == "TABLE")
 		{
 			string ele3;
 			getline(is, ele3, ';');
 			curDb->deltable(ele3);
+			curDb->create_database_file();
 		}
 	}
 	else if (ele1 == "USE")
@@ -318,6 +322,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				curTb->InsertNull(nullname, type);
 			}
 		}
+		curTb->create_table_file(curDb->get_name());
 	}
 	else if (ele1 == "DELETE")
 	{
@@ -336,6 +341,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		getline(is, ele2, ' ');
 		getline(is, condition, ';');
 		curTb->Delete(condition);
+		curTb->create_table_file(curDb->get_name());
 	}
 	else if (ele1 == "UPDATE")
 	{
@@ -379,6 +385,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			double val = stod(mvalue);
 			curTb->Update(mclname, val, condition);
 		}
+		curTb->create_table_file(curDb->get_name());
 	}
 
 	else if (ele1 == "SELECT")
@@ -788,6 +795,45 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			}
 		}
 		curTb->load_data_from_file(file_name, col_name);
+	}
+	else if (ele1 == "SAVE")
+	{
+		string nm, nm0;
+		is >> nm0;
+		Transform(nm0, nm);
+		while (nm[nm.length() - 1] == ';')
+			nm = nm.substr(0, nm.length() - 1);
+		if (nm == "ALL")
+		{
+			Allbases.create_allbases_file();
+		}
+		else if (nm == "DATABASE")
+		{
+			string dbname;
+			is >> dbname;
+			if (dbname[dbname.length() - 1] == ';')
+				dbname = dbname.substr(0, dbname.length() - 1);
+			DATABASE *db_to_save = Allbases.AllBasesMap[dbname];
+			db_to_save->create_database_file();
+			db_to_save = nullptr;
+		}
+		else if (nm == "TABLE") //输入格式是SAVE TABLE tbname FROM DATABASE dbname;
+		{
+			string inter, dbname, tbname;
+			is >> tbname;
+			is >> inter; //FROM
+			is >> inter; //DATABASE
+			is >> dbname;
+			while (dbname[dbname.length() - 1] == ';')
+				dbname = dbname.substr(0, dbname.length() - 1);
+			DATABASE *db = Allbases.AllBasesMap[dbname];
+			TABLE *tb = db->DataBaseMap[tbname];
+			tb->create_table_file(db->get_name());
+		}
+	}
+	else if (ele1 == "RELOAD" || ele1 == "RELOAD;")
+	{
+		Allbases.load_all_databases();
 	}
 }
 
