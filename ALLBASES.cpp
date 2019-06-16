@@ -56,13 +56,14 @@ const std::vector<std::string> &ALLBASES::Get_DBName()
 
 void ALLBASES::create_allbases_file() //存档，将allbases类里面每个数据库的名字存到一个文件里面去
 {
-	string filename = ".\\\\storage\\\\" + string("index.txt");
+	std::string filename = "./data/" + std::string("index.txt");
 	ofstream fst(filename);
 	int h = DBName.size();
 	fst << h;
 	fst << "\n";
 	for (int i = 0; i < DBName.size(); i++)
 		fst << DBName[i] << "\n";
+	fst.flush();
 	fst.close();
 
 	for (int i = 0; i < DBName.size(); i++)
@@ -74,7 +75,7 @@ void ALLBASES::create_allbases_file() //存档，将allbases类里面每个数�
 void ALLBASES::load_all_databases()
 {
 	fstream fst;
-	string filename = ".\\\\storage\\\\" + string("index.txt");
+	string filename = "./data/" + string("index.txt");
 	fst.open(filename); //默认把总管文件命名为index.txt
 	int database_num;
 	fst >> database_num;

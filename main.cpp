@@ -1,12 +1,13 @@
 #include "PARSE.h"
-//#include <direct.h>
+#include <direct.h>
+#include <io.h>
 
 using namespace std;
 
 int main()
 {
-	//if(access("storage", 00) == -1)
-	//	mkdir("storage");
+	if(access("data", 00) == -1)
+		mkdir("data");
 	ALLBASES Allbases;
 	PARSE Parse;
 	string tem;
