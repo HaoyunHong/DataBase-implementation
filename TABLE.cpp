@@ -1358,7 +1358,7 @@ void TABLE::load_data_from_file(const std::string &in_file_name, const std::vect
 	fin.close();
 	return;
 }
-/* 
+
 void TABLE::create_table_file(const std::string &dbname)
 {
 	UpdateRow();
@@ -1506,4 +1506,4 @@ void TABLE::load_table(const std::string &dbname)
 		fst.get();
 	}
 	fst.close();
-}*/
+}

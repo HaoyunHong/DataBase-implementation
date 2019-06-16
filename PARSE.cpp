@@ -145,7 +145,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 					}
 				}
 			}
-			//curDb->create_database_file();
+			curDb->create_database_file();
 		}
 	}
 	else if (ele1 == "DROP")
@@ -158,14 +158,14 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			string ele3;
 			getline(is, ele3, ';');
 			Allbases.del(ele3);
-			//Allbases.create_allbases_file();
+			Allbases.create_allbases_file();
 		}
 		if (ele2 == "TABLE")
 		{
 			string ele3;
 			getline(is, ele3, ';');
 			curDb->deltable(ele3);
-			//curDb->create_database_file();
+			curDb->create_database_file();
 		}
 	}
 	else if (ele1 == "USE")
@@ -322,7 +322,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				curTb->InsertNull(nullname, type);
 			}
 		}
-		//curTb->create_table_file(curDb->get_name());
+		curTb->create_table_file(curDb->get_name());
 	}
 	else if (ele1 == "DELETE")
 	{
@@ -341,7 +341,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		getline(is, ele2, ' ');
 		getline(is, condition, ';');
 		curTb->Delete(condition);
-		//curTb->create_table_file(curDb->get_name());
+		curTb->create_table_file(curDb->get_name());
 	}
 	else if (ele1 == "UPDATE")
 	{
@@ -385,7 +385,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			double val = stod(mvalue);
 			curTb->Update(mclname, val, condition);
 		}
-		//curTb->create_table_file(curDb->get_name());
+		curTb->create_table_file(curDb->get_name());
 	}
 
 	else if (ele1 == "SELECT")
@@ -983,7 +983,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			}
 		}
 		curTb->load_data_from_file(file_name, col_name);
-	} /*
+	} 
 	else if (ele1 == "SAVE")
 	{
 		string nm, nm0;
@@ -1022,7 +1022,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 	else if (ele1 == "RELOAD" || ele1 == "RELOAD;")
 	{
 		Allbases.load_all_databases();
-	}*/
+	}
 }
 
 string PARSE::whole_expression_standardize(string whole_expression)
