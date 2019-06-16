@@ -858,8 +858,8 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 							default:
 								break;
 							}
-							cout << endl;
 						}
+						cout << endl;
 					}
 				}
 				if (index2 < tb2->column_to_order.size())

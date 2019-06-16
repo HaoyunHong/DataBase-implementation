@@ -12,5 +12,7 @@ INSERT INTO class_huang(score, gpa, name2) VALUES (88, 3.6, "C");
 INSERT INTO class_huang(score, gpa, name2) VALUES (83, 3.3, "D");
 SELECT gpa, name1 from class_liu UNION gpa, name2 from class_huang ORDER BY gpa;
 SELECT gpa, name2 from class_huang UNION gpa, name1 from class_liu ORDER BY gpa;
+SELECT gpa, name1 from class_liu UNION ALL gpa, name2 from class_huang ORDER BY gpa;
+SELECT gpa, name2 from class_huang UNION ALL gpa, name1 from class_liu ORDER BY gpa;
 SELECT score, name1 from class_liu UNION score, name2 from class_huang ORDER BY score;
 SELECT score, name2 from class_huang UNION score, name1 from class_liu ORDER BY score;
