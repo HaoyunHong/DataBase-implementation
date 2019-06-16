@@ -53,7 +53,7 @@ const std::vector<std::string> &ALLBASES::Get_DBName()
 {
 	return DBName;
 }
-/*
+
 void ALLBASES::create_allbases_file() //存档，将allbases类里面每个数据库的名字存到一个文件里面去
 {
 	std::string filename = "./data/" + std::string("index.txt");
@@ -89,4 +89,4 @@ void ALLBASES::load_all_databases()
 	fst.close();
 	for(int i = 0; i < DBName.size(); i++)
 		AllBasesMap[DBName[i]]->load_database();
-} */
+}

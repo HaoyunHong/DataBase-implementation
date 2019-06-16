@@ -64,8 +64,8 @@ public:
 	void write_into_outfile(const std::string &out_file_name, const std::vector<int> &outorder, const std::vector<std::string> &col_name); //输出到目标文件
 	void load_data_from_file(const std::string &in_file_name, const std::vector<std::string> &col_name);
 	void bubble_sort(std::vector<int> &order);		   //按照关键列对行下标的vector进行冒泡排序
-	//void create_table_file(const std::string &dbname); //存档
-	//void load_table(const std::string &dbname);		   //读档
+	void create_table_file(const std::string &dbname); //存档
+	void load_table(const std::string &dbname);		   //读档
 };
 
 inline void split(const std::string &s, std::vector<std::string> &sv, const char flag = ' '); //分割字符串
