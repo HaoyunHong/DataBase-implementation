@@ -32,8 +32,8 @@ enum DataType
     _INT,
     _DOUBLE,
     _CHAR,
-    _TIME,
-    _DATE,
+    // _TIME,
+    // _DATE,
 };
 
 class DATA

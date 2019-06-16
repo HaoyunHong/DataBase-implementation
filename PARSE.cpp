@@ -33,7 +33,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			string ele3;
 			getline(is, ele3, ';');
 			Allbases.create(ele3);
-			Allbases.create_allbases_file();
+			//Allbases.create_allbases_file();
 		}
 		if (ele2 == "TABLE")
 		{
@@ -145,7 +145,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 					}
 				}
 			}
-			curDb->create_database_file();
+			//curDb->create_database_file();
 		}
 	}
 	else if (ele1 == "DROP")
@@ -158,14 +158,14 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			string ele3;
 			getline(is, ele3, ';');
 			Allbases.del(ele3);
-			Allbases.create_allbases_file();
+			//Allbases.create_allbases_file();
 		}
 		if (ele2 == "TABLE")
 		{
 			string ele3;
 			getline(is, ele3, ';');
 			curDb->deltable(ele3);
-			curDb->create_database_file();
+			//curDb->create_database_file();
 		}
 	}
 	else if (ele1 == "USE")
@@ -322,7 +322,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				curTb->InsertNull(nullname, type);
 			}
 		}
-		curTb->create_table_file(curDb->get_name());
+		//curTb->create_table_file(curDb->get_name());
 	}
 	else if (ele1 == "DELETE")
 	{
@@ -341,7 +341,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		getline(is, ele2, ' ');
 		getline(is, condition, ';');
 		curTb->Delete(condition);
-		curTb->create_table_file(curDb->get_name());
+		//curTb->create_table_file(curDb->get_name());
 	}
 	else if (ele1 == "UPDATE")
 	{
@@ -385,7 +385,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			double val = stod(mvalue);
 			curTb->Update(mclname, val, condition);
 		}
-		curTb->create_table_file(curDb->get_name());
+		//curTb->create_table_file(curDb->get_name());
 	}
 
 	else if (ele1 == "SELECT")
@@ -717,7 +717,6 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				has_all = true; //不是ALL就是SELECT
 			if (has_all)
 				is >> buf; //读入SELECT
-			is >> buf;
 			while (buf[buf.length() - 1] == ',')
 			{
 				buf = buf.substr(0, buf.length() - 1); //去掉逗号
@@ -726,6 +725,16 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			}
 			col_2_name.push_back(buf);
 			is >> buf >> tbname2 >> buf >> buf >> order_col;
+			order_col = order_col.substr(0, order_col.size() - 1);
+
+			/* for (int i = 0; i < col_name.size(); i++)
+				cout << col_name[i] << '\t';
+			cout << endl;
+			for (int i = 0; i < col_2_name.size(); i++)
+				cout << col_2_name[i] << '\t';
+			cout << endl;
+			cout << order_col << endl;*/
+
 			if (col_name[0] != col_2_name[0] || col_name[0] != order_col || col_name.size() != col_2_name.size())
 				cout << "Please check your command again!" << endl;
 			else
@@ -733,34 +742,55 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				TABLE *tb1, *tb2;
 				tb1 = curDb->DataBaseMap[tbname1];
 				tb2 = curDb->DataBaseMap[tbname2];
-				tb1->Order_in_Union(col_name, order_col);
-				tb2->Order_in_Union(col_2_name, order_col);
+				tb1->Order_in_Union(col_name, order_col, has_all);
+				tb2->Order_in_Union(col_2_name, order_col, has_all);
+
+				/*for (int i = 0; i < tb1->column_to_order.size(); i++)
+					cout << tb1->column_to_order[i] << '\t';
+				cout << endl;
+				for (int i = 0; i < tb2->column_to_order.size(); i++)
+					cout << tb2->column_to_order[i] << '\t';
+				cout << endl; */
+
 				for (int i = 0; i < col_name.size(); i++)
 					cout << col_name[i] << '\t';
 				cout << endl;
 				int index1 = 0, index2 = 0;
-				while (index1 < tb1->GetRowNum() && index2 < tb2->GetRowNum())
+				while (index1 < tb1->column_to_order.size() && index2 < tb2->column_to_order.size())
 				{
 					bool flag = false; //T表示tb1中较小，F表示tb2中较小
+					bool same = false;
 					DataType order_type = tb1->GetType(order_col);
 					switch (order_type)
 					{
 					case _INT:
 						if (tb1->GetColumn(order_col)->Get_INT_Value(tb1->column_to_order[index1]) < tb2->GetColumn(order_col)->Get_INT_Value(tb2->column_to_order[index2]))
 							flag = true;
+						if (tb1->GetColumn(order_col)->Get_INT_Value(tb1->column_to_order[index1]) == tb2->GetColumn(order_col)->Get_INT_Value(tb2->column_to_order[index2]))
+							same = true;
 						break;
 					case _DOUBLE:
 						if (tb1->GetColumn(order_col)->Get_DOUBLE_Value(tb1->column_to_order[index1]) < tb2->GetColumn(order_col)->Get_DOUBLE_Value(tb2->column_to_order[index2]))
 							flag = true;
+						if (tb1->GetColumn(order_col)->Get_DOUBLE_Value(tb1->column_to_order[index1]) == tb2->GetColumn(order_col)->Get_DOUBLE_Value(tb2->column_to_order[index2]))
+							same = true;
 						break;
 					case _CHAR:
 						if (tb1->GetColumn(order_col)->Get_CHAR_Value(tb1->column_to_order[index1]) < tb2->GetColumn(order_col)->Get_CHAR_Value(tb2->column_to_order[index2]))
 							flag = true;
+						if (tb1->GetColumn(order_col)->Get_CHAR_Value(tb1->column_to_order[index1]) == tb2->GetColumn(order_col)->Get_CHAR_Value(tb2->column_to_order[index2]))
+							same = true;
 						break;
 					default:
 						break;
 					}
+					if (!has_all && same)
+					{
+						index1++;
+						continue;
+					}
 					for (int i = 0; i < col_name.size(); i++)
+					{
 						if (flag)
 						{
 							COLUMN *pcol = tb1->GetColumn(col_name[i]);
@@ -779,7 +809,6 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 							default:
 								break;
 							}
-							index1++;
 						}
 						else
 						{
@@ -799,13 +828,17 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 							default:
 								break;
 							}
-							index2++;
 						}
+					}
 					cout << endl;
+					if (flag)
+						index1++;
+					else
+						index2++;
 				}
-				if (index1 < tb1->GetRowNum())
+				if (index1 < tb1->column_to_order.size())
 				{
-					for (; index1 < tb1->GetRowNum(); index1++)
+					for (; index1 < tb1->column_to_order.size(); index1++)
 					{
 						for (int i = 0; i < col_name.size(); i++)
 						{
@@ -825,13 +858,13 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 							default:
 								break;
 							}
+							cout << endl;
 						}
-						cout << endl;
 					}
 				}
-				if (index2 < tb2->GetRowNum())
+				if (index2 < tb2->column_to_order.size())
 				{
-					for (; index2 < tb2->GetRowNum(); index2++)
+					for (; index2 < tb2->column_to_order.size(); index2++)
 					{
 						for (int i = 0; i < col_name.size(); i++)
 						{
@@ -852,8 +885,8 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 								break;
 							}
 						}
+						cout << endl;
 					}
-					cout << endl;
 				}
 			}
 		}
@@ -950,7 +983,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			}
 		}
 		curTb->load_data_from_file(file_name, col_name);
-	}
+	} /*
 	else if (ele1 == "SAVE")
 	{
 		string nm, nm0;
@@ -989,7 +1022,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 	else if (ele1 == "RELOAD" || ele1 == "RELOAD;")
 	{
 		Allbases.load_all_databases();
-	}
+	}*/
 }
 
 string PARSE::whole_expression_standardize(string whole_expression)

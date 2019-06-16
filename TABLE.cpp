@@ -1053,9 +1053,10 @@ void TABLE::Select_Order(const std::vector<std::string> &col_name, const std::st
 	}
 }
 
-void TABLE::Order_in_Union(const std::vector<std::string> &col_name, const std::string &order_col)
+void TABLE::Order_in_Union(const std::vector<std::string> &col_name, const std::string &order_col, bool has_all)
 {
 	column_to_order.clear();
+	this->UpdateRow();
 	for (int i = 0; i < RowNum; i++)
 		column_to_order.push_back(i);
 	COLUMN *pcol = this->TableMap[order_col];
@@ -1067,15 +1068,15 @@ void TABLE::Order_in_Union(const std::vector<std::string> &col_name, const std::
 			switch (order_type)
 			{
 			case _INT:
-				if (pcol->Get_INT_Value(j) > pcol->Get_INT_Value(j + 1))
+				if (pcol->Get_INT_Value(column_to_order[j]) > pcol->Get_INT_Value(column_to_order[j + 1]))
 					chk = true;
 				break;
 			case _DOUBLE:
-				if (pcol->Get_DOUBLE_Value(j) > pcol->Get_DOUBLE_Value(j + 1))
+				if (pcol->Get_DOUBLE_Value(column_to_order[j]) > pcol->Get_DOUBLE_Value(column_to_order[j + 1]))
 					chk = true;
 				break;
 			case _CHAR:
-				if (pcol->Get_CHAR_Value(j) > pcol->Get_CHAR_Value(j + 1))
+				if (pcol->Get_CHAR_Value(column_to_order[j]) > pcol->Get_CHAR_Value(column_to_order[j + 1]))
 					chk = true;
 				break;
 			}
@@ -1086,6 +1087,33 @@ void TABLE::Order_in_Union(const std::vector<std::string> &col_name, const std::
 				column_to_order[j + 1] = tmp;
 			}
 		}
+	if (!has_all)
+	{
+		vector<int> tmp = column_to_order;
+		column_to_order.clear();
+		column_to_order.push_back(tmp[0]);
+		for (int i = 1; i < tmp.size(); i++)
+		{
+			bool chk = false;
+			switch (order_type)
+			{
+			case _INT:
+				if (pcol->Get_INT_Value(tmp[i]) != pcol->Get_INT_Value(tmp[i - 1]))
+					chk = true;
+				break;
+			case _DOUBLE:
+				if (pcol->Get_DOUBLE_Value(tmp[i]) != pcol->Get_DOUBLE_Value(tmp[i - 1]))
+					chk = true;
+				break;
+			case _CHAR:
+				if (pcol->Get_CHAR_Value(tmp[i]) != pcol->Get_CHAR_Value(tmp[i - 1]))
+					chk = true;
+				break;
+			}
+			if (chk)
+				column_to_order.push_back(tmp[i]);
+		}
+	}
 }
 
 void TABLE::write_into_outfile(const std::string &out_file_name, const std::vector<int> &outorder, const std::vector<std::string> &col_name)
@@ -1330,12 +1358,12 @@ void TABLE::load_data_from_file(const std::string &in_file_name, const std::vect
 	fin.close();
 	return;
 }
-
+/* 
 void TABLE::create_table_file(const std::string &dbname)
 {
 	UpdateRow();
 	std::string filename;
-	filename = ".\\\\storage\\\\" + dbname + "." + name + ".txt";
+	filename =  dbname + "." + name + ".txt";
 	std::ofstream fout;
 	fout.open(filename);
 	fout << ColumnName.size() << '\n'; //首先存总列数（空表就存0)
@@ -1404,7 +1432,7 @@ void TABLE::load_table(const std::string &dbname)
 {
 	fstream fst;
 	string filename;
-	filename = ".\\\\storage\\\\" + dbname + "." + name + ".txt";
+	filename =  dbname + "." + name + ".txt";
 	fst.open(filename);
 	int col_num, row_num;
 	vector<string> col_name;
@@ -1479,4 +1507,4 @@ void TABLE::load_table(const std::string &dbname)
 		fst.get();
 	}
 	fst.close();
-}
+}*/

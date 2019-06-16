@@ -22,7 +22,7 @@ public:
     void create(std::string dbname);   //建立名为dbname的新数据库
     void del(std::string name);        //Drop名为name的数据库
     void show();                       //按字典序列出当前数据库
-    void create_allbases_file();       //存档，将allbases类里面每个数据库的名字存到一个文件里面去
+    //void create_allbases_file();       //存档，将allbases类里面每个数据库的名字存到一个文件里面去
     const std::vector<std::string>& Get_DBName();
-    void load_all_databases();         //从本地读档并生成相关数据库和表
+    //void load_all_databases();         //从本地读档并生成相关数据库和表
 };
