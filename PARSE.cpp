@@ -33,7 +33,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			string ele3;
 			getline(is, ele3, ';');
 			Allbases.create(ele3);
-			//Allbases.create_allbases_file();
+			Allbases.create_allbases_file();
 		}
 		if (ele2 == "TABLE")
 		{
