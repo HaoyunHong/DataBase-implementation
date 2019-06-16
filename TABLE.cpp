@@ -1335,7 +1335,7 @@ void TABLE::create_table_file(const std::string &dbname)
 {
 	UpdateRow();
 	std::string filename;
-	filename = dbname + "." + name + ".txt";
+	filename = ".\\\\storage\\\\" + dbname + "." + name + ".txt";
 	std::ofstream fout;
 	fout.open(filename);
 	fout << ColumnName.size() << '\n'; //首先存总列数（空表就存0)
@@ -1404,7 +1404,7 @@ void TABLE::load_table(const std::string &dbname)
 {
 	fstream fst;
 	string filename;
-	filename = dbname + "." + name + ".txt";
+	filename = ".\\\\storage\\\\" + dbname + "." + name + ".txt";
 	fst.open(filename);
 	int col_num, row_num;
 	vector<string> col_name;

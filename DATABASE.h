@@ -63,7 +63,7 @@ public:
     void create_database_file()
     {
         std::ofstream fout;
-        std::string filename = name + ".txt";
+        std::string filename = ".\\\\storage\\\\" + name + ".txt";
         fout.open(filename);
         fout << TableName.size() << "\n";
         for (int i = 0; i < TableName.size(); i++)
@@ -77,7 +77,7 @@ public:
     void load_database()
     {
         std::fstream fst;
-        std::string filename = name + ".txt";
+        std::string filename = ".\\\\storage\\\\" + name + ".txt";
         fst.open(filename);
         int table_num;
         fst >> table_num;
