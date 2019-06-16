@@ -713,7 +713,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		if (ele0_upper != "DATA")
 		{
 			cout << ele0_upper << endl;
-			cout << "invalid command :: expect \"DATA\" here but not found.";
+			cout << "invalid command :: expect \"DATA\" here but not found." << endl;
 			return;
 		}
 		is >> ele0; //"INFILE"
@@ -744,7 +744,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		Transform(ele0, ele0_upper);
 		if (ele0_upper != "INTO")
 		{
-			cout << "invalid command :: expect \"INTO\" here but not found.";
+			cout << "invalid command :: expect \"INTO\" here but not found." << endl;
 			return;
 		}
 		is >> ele0; //"TABLE"
