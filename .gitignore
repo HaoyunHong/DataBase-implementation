@@ -1,2 +1,6 @@
 
 *.ipch
+.DS_Store
+*.ipch
+*.json
+*.ipch

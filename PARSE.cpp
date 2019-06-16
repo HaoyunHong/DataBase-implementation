@@ -394,6 +394,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 	//SELECT COUNT(expression) from TBNAME; (这里如果出现COUNT就不会出现其他列名,和第一种情况一起处理)
 	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name, ...; (这里SELECT,COUNT只能作用于GROUP的列）
 	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name, ... ORDER BY ...; (这里ORDER只能作用于GROUP的列或者COUNT）
+	//SELECT stu_name, ... FROM TBNAME1 UNION (ALL) SELECT stu_name, ... FROM TBNAME2 ORDER BY stu_name; (这里默认第一个出现的列为整合列，ORDER只能作用于整合列,...中的列数目必须相同,表头按TBNAME1的列名输出)
 	{
 		std::vector<std::string> col_name;
 		std::vector<std::string> tb_name;
@@ -401,7 +402,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		std::vector<std::string> col_2_name;
 		col_name.clear();
 		string ele2, ele2_upper;
-		int chk = 0;				 //1代表正常SELECT，2代表需要输出到文件（出现“INTO”）,3代表……
+		int chk = 0;				 //1代表正常SELECT,2代表需要输出到文件（出现“INTO”）,3代表UNION命令
 		bool has_whereclause = true; //判断是否有whereclause语句（现在含义扩大，含有GROUP也将算入）
 		while (chk == 0)
 		{
@@ -431,7 +432,10 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				Transform(ele2, ele2_upper);
 				if (ele2_upper == "FROM")
 				{
-					chk = 1;
+					if (input_upper.find(" UNION ") == -1)
+						chk = 1;
+					else
+						chk = 3;
 					break;
 				}
 				else if (ele2_upper == "INTO")
@@ -701,6 +705,37 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			}
 			auto outorder = curTb->Select(col_name, condition); //outorder储存了需要输出的行的下标
 			curTb->write_into_outfile(out_file_name, outorder, col_name);
+		}
+		else if (chk == 3) //SELECT stu_name, ... FROM TBNAME1 UNION (ALL) SELECT stu_name, ... FROM TBNAME2 ORDER BY stu_name;
+		{
+			string tbname1, tbname2, order_col, buf, buf_upper;
+			bool has_all = false;
+			is >> tbname1;
+			is >> buf >> buf; //读入“UNION”和他后面那个
+			Transform(buf, buf_upper);
+			if (buf_upper == "ALL")
+				has_all = true; //不是ALL就是SELECT
+			if (has_all)
+				is >> buf; //读入SELECT
+			is >> buf;
+			while (buf[buf.length() - 1] == ',')
+			{
+				buf = buf.substr(0, buf.length() - 1); //去掉逗号
+				col_2_name.push_back(buf);
+				is >> buf;
+			}
+			col_2_name.push_back(buf);
+			is >> buf >> tbname2 >> buf >> buf >> order_col;
+			if (col_name[0] != col_2_name[0] || col_name[0] != order_col || col_name.size() != col_2_name.size())
+				cout << "Please check your command again!" << endl;
+			else
+			{
+				TABLE *tb1, *tb2;
+				tb1=curDb->DataBaseMap[tbname1];
+				tb2=curDb->DataBaseMap[tbname2];
+				tb1->Order_in_Union(col_name,order_col);
+				tb2->Order_in_Union(col_2_name,order_col);
+			}
 		}
 	}
 

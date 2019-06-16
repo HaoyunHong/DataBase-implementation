@@ -1053,6 +1053,41 @@ void TABLE::Select_Order(const std::vector<std::string> &col_name, const std::st
 	}
 }
 
+void TABLE::Order_in_Union(const std::vector<std::string> &col_name, const std::string &order_col)
+{
+	column_to_order.clear();
+	for (int i = 0; i < RowNum; i++)
+		column_to_order.push_back(i);
+	COLUMN *pcol = this->TableMap[order_col];
+	DataType order_type = this->GetType(order_col);
+	for (int i = 0; i < RowNum - 1; i++)
+		for (int j = 0; j <= RowNum - 2 - i; j++)
+		{
+			bool chk = false;
+			switch (order_type)
+			{
+			case _INT:
+				if (pcol->Get_INT_Value(j) > pcol->Get_INT_Value(j + 1))
+					chk = true;
+				break;
+			case _DOUBLE:
+				if (pcol->Get_DOUBLE_Value(j) > pcol->Get_DOUBLE_Value(j + 1))
+					chk = true;
+				break;
+			case _CHAR:
+				if (pcol->Get_CHAR_Value(j) > pcol->Get_CHAR_Value(j + 1))
+					chk = true;
+				break;
+			}
+			if (chk)
+			{
+				int tmp = column_to_order[j];
+				column_to_order[j] = column_to_order[j + 1];
+				column_to_order[j + 1] = tmp;
+			}
+		}
+}
+
 void TABLE::write_into_outfile(const std::string &out_file_name, const std::vector<int> &outorder, const std::vector<std::string> &col_name)
 {
 	ofstream fout;
@@ -1401,9 +1436,9 @@ void TABLE::load_table(const std::string &dbname)
 			addcolumn(name, _CHAR);
 			col_type.push_back(_CHAR);
 		}
-		fst.get();//换行符
+		fst.get(); //换行符
 	}
-	SetKey(key);	
+	SetKey(key);
 
 	for (int i = 0; i < col_num; i++)
 	{
@@ -1415,7 +1450,7 @@ void TABLE::load_table(const std::string &dbname)
 				fst >> data;
 				if (data == "NULL")
 					TableMap[col_name[i]]->push_back_null(int(0));
-				else if(data != "")
+				else if (data != "")
 					TableMap[col_name[i]]->push_back(stoi(data));
 			}
 		}
@@ -1426,7 +1461,7 @@ void TABLE::load_table(const std::string &dbname)
 				fst >> data;
 				if (data == "NULL")
 					TableMap[col_name[i]]->push_back_null(0.0);
-				else if(data != "")
+				else if (data != "")
 					TableMap[col_name[i]]->push_back(stod(data));
 			}
 		}
@@ -1437,7 +1472,7 @@ void TABLE::load_table(const std::string &dbname)
 				fst >> data;
 				if (data == "NULL")
 					TableMap[col_name[i]]->push_back_null(char(0));
-				else if(data != "")
+				else if (data != "")
 					TableMap[col_name[i]]->push_back(data[0]);
 			}
 		}
