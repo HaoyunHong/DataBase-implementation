@@ -1363,9 +1363,8 @@ void TABLE::create_table_file(const std::string &dbname)
 {
 	UpdateRow();
 	std::string filename;
-	filename =  dbname + "." + name + ".txt";
-	std::ofstream fout;
-	fout.open(filename);
+	filename = "./data/" + dbname + "." + name + ".txt";
+	std::ofstream fout(filename);
 	fout << ColumnName.size() << '\n'; //首先存总列数（空表就存0)
 	fout << RowNum << '\n';			   //再存行数
 	fout << KeyColumn << '\n';		   //再存一下primary key列的名字
@@ -1420,7 +1419,7 @@ void TABLE::create_table_file(const std::string &dbname)
 				if (TableMap[ColumnName[i]]->Get_IsNull(j))
 					fout << "NULL" << '\t';
 				else
-					fout << TableMap[ColumnName[i]]->Get_INT_Value(j) << '\t';
+					fout << TableMap[ColumnName[i]]->Get_CHAR_Value(j) << '\t';
 			}
 		}
 		fout << '\n';
@@ -1432,7 +1431,7 @@ void TABLE::load_table(const std::string &dbname)
 {
 	fstream fst;
 	string filename;
-	filename =  dbname + "." + name + ".txt";
+	filename = "./data/" + dbname + "." + name + ".txt";
 	fst.open(filename);
 	int col_num, row_num;
 	vector<string> col_name;
