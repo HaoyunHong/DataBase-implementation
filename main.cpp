@@ -1,15 +1,15 @@
 #include "PARSE.h"
 //#include <direct.h>
 //#include <io.h>
-#include <unistd.h>
-#include <sys/stat.h>
+//#include <unistd.h>
+//#include <sys/stat.h>
 
 using namespace std;
 
 int main()
 {
-	if(access("data", 00) == -1)
-		mkdir("data",0755);
+	string cmd = "mkdir -p data";
+    system(cmd.c_str());
 	ALLBASES Allbases;
 	PARSE Parse;
 	string tem;
