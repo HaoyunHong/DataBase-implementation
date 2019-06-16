@@ -14,9 +14,9 @@ private:
 	std::vector<int> num_of_each_kind; //记录每个种类的行数
 	int kind;						   //记录分类的种数
 
-	std::vector<int> column_to_order; //在Select ... Order，Union中使用
 public:
 	std::map<std::string, COLUMN *> TableMap;																  //一个map：列名->列指针
+	std::vector<int> column_to_order;																		  //在Select ... Order，Union中使用
 	void showcolumns();																						  //按给定格式打印各列信息
 	void addcolumn(std::string clname, DataType ctype);														  //添加一列；参数：(列名，类型）
 	void addcolumn(std::string clname, DataType ctype, std::vector<ConstraintType> &Constraints);			  //添加一列；参数：(列名，类型，一个存放限制信息的vector)
@@ -63,9 +63,9 @@ public:
 	void Order_in_Union(const std::vector<std::string> &col_name, const std::string &order_col);
 	void write_into_outfile(const std::string &out_file_name, const std::vector<int> &outorder, const std::vector<std::string> &col_name); //输出到目标文件
 	void load_data_from_file(const std::string &in_file_name, const std::vector<std::string> &col_name);
-	void bubble_sort(std::vector<int> &order);		 //按照关键列对行下标的vector进行冒泡排序
+	void bubble_sort(std::vector<int> &order);		   //按照关键列对行下标的vector进行冒泡排序
 	void create_table_file(const std::string &dbname); //存档
-	void load_table(const std::string &dbname);		 //读档
+	void load_table(const std::string &dbname);		   //读档
 };
 
 inline void split(const std::string &s, std::vector<std::string> &sv, const char flag = ' '); //分割字符串

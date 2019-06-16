@@ -731,10 +731,130 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			else
 			{
 				TABLE *tb1, *tb2;
-				tb1=curDb->DataBaseMap[tbname1];
-				tb2=curDb->DataBaseMap[tbname2];
-				tb1->Order_in_Union(col_name,order_col);
-				tb2->Order_in_Union(col_2_name,order_col);
+				tb1 = curDb->DataBaseMap[tbname1];
+				tb2 = curDb->DataBaseMap[tbname2];
+				tb1->Order_in_Union(col_name, order_col);
+				tb2->Order_in_Union(col_2_name, order_col);
+				for (int i = 0; i < col_name.size(); i++)
+					cout << col_name[i] << '\t';
+				cout << endl;
+				int index1 = 0, index2 = 0;
+				while (index1 < tb1->GetRowNum() && index2 < tb2->GetRowNum())
+				{
+					bool flag = false; //T表示tb1中较小，F表示tb2中较小
+					DataType order_type = tb1->GetType(order_col);
+					switch (order_type)
+					{
+					case _INT:
+						if (tb1->GetColumn(order_col)->Get_INT_Value(tb1->column_to_order[index1]) < tb2->GetColumn(order_col)->Get_INT_Value(tb2->column_to_order[index2]))
+							flag = true;
+						break;
+					case _DOUBLE:
+						if (tb1->GetColumn(order_col)->Get_DOUBLE_Value(tb1->column_to_order[index1]) < tb2->GetColumn(order_col)->Get_DOUBLE_Value(tb2->column_to_order[index2]))
+							flag = true;
+						break;
+					case _CHAR:
+						if (tb1->GetColumn(order_col)->Get_CHAR_Value(tb1->column_to_order[index1]) < tb2->GetColumn(order_col)->Get_CHAR_Value(tb2->column_to_order[index2]))
+							flag = true;
+						break;
+					default:
+						break;
+					}
+					for (int i = 0; i < col_name.size(); i++)
+						if (flag)
+						{
+							COLUMN *pcol = tb1->GetColumn(col_name[i]);
+							DataType col_type = tb1->GetType(col_name[i]);
+							switch (col_type)
+							{
+							case _INT:
+								cout << pcol->Get_INT_Value(tb1->column_to_order[index1]) << '\t';
+								break;
+							case _DOUBLE:
+								cout << pcol->Get_DOUBLE_Value(tb1->column_to_order[index1]) << '\t';
+								break;
+							case _CHAR:
+								cout << pcol->Get_CHAR_Value(tb1->column_to_order[index1]) << '\t';
+								break;
+							default:
+								break;
+							}
+							index1++;
+						}
+						else
+						{
+							COLUMN *pcol = tb2->GetColumn(col_2_name[i]);
+							DataType col_type = tb2->GetType(col_2_name[i]);
+							switch (col_type)
+							{
+							case _INT:
+								cout << pcol->Get_INT_Value(tb2->column_to_order[index2]) << '\t';
+								break;
+							case _DOUBLE:
+								cout << pcol->Get_DOUBLE_Value(tb2->column_to_order[index2]) << '\t';
+								break;
+							case _CHAR:
+								cout << pcol->Get_CHAR_Value(tb2->column_to_order[index2]) << '\t';
+								break;
+							default:
+								break;
+							}
+							index2++;
+						}
+					cout << endl;
+				}
+				if (index1 < tb1->GetRowNum())
+				{
+					for (; index1 < tb1->GetRowNum(); index1++)
+					{
+						for (int i = 0; i < col_name.size(); i++)
+						{
+							COLUMN *pcol = tb1->GetColumn(col_name[i]);
+							DataType col_type = tb1->GetType(col_name[i]);
+							switch (col_type)
+							{
+							case _INT:
+								cout << pcol->Get_INT_Value(tb1->column_to_order[index1]) << '\t';
+								break;
+							case _DOUBLE:
+								cout << pcol->Get_DOUBLE_Value(tb1->column_to_order[index1]) << '\t';
+								break;
+							case _CHAR:
+								cout << pcol->Get_CHAR_Value(tb1->column_to_order[index1]) << '\t';
+								break;
+							default:
+								break;
+							}
+						}
+						cout << endl;
+					}
+				}
+				if (index2 < tb2->GetRowNum())
+				{
+					for (; index2 < tb2->GetRowNum(); index2++)
+					{
+						for (int i = 0; i < col_name.size(); i++)
+						{
+							COLUMN *pcol = tb2->GetColumn(col_2_name[i]);
+							DataType col_type = tb2->GetType(col_2_name[i]);
+							switch (col_type)
+							{
+							case _INT:
+								cout << pcol->Get_INT_Value(tb2->column_to_order[index2]) << '\t';
+								break;
+							case _DOUBLE:
+								cout << pcol->Get_DOUBLE_Value(tb2->column_to_order[index2]) << '\t';
+								break;
+							case _CHAR:
+								cout << pcol->Get_CHAR_Value(tb2->column_to_order[index2]) << '\t';
+								break;
+							default:
+								break;
+							}
+						}
+					}
+					cout << endl;
+				}
 			}
 		}
 	}
