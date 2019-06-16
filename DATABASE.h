@@ -60,7 +60,7 @@ public:
             std::cout << *it << std::endl;
         }
     }
-    /* 
+    
     void create_database_file()
     {
         std::ofstream fout;
@@ -93,5 +93,5 @@ public:
         fst.close();
         for (int i = 0; i < TableName.size(); i++)
             DataBaseMap[TableName[i]]->load_table(name);
-    }*/
+    }
 };
