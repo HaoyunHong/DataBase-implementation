@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string.h>
 #include<stack>
+#include<cmath>
 
 class DATA;
 class COLUMN;

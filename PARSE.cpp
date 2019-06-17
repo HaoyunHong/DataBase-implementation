@@ -470,6 +470,13 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				cout << abs(stod(str))<< endl;
 				break;
 			}
+			if (input_upper.find(" ACOS(") != -1)
+			{
+				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
+				//cout << str << endl;
+				cout << acos(stod(str)) << endl;
+				break;
+			}
 
 			/**再加两个判断，防止影响后面**/
 			else if (input_upper.find(" FROM ") == -1 && input_upper.find(" INTO ") == -1 && (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("*") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1))
