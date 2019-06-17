@@ -417,6 +417,22 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 					string str = input.substr(input.find("(") + 2, input.find(")") - input.find("(")-3);
 					cout <<"The length of the entered string \""<< str<<"\" is "<<str.length()<<"." << endl;
 				}
+				//此处是实现连接字符串的函数
+				else if (input_upper.find(" CONCAT") != -1)
+				{
+					string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
+					//cout << str << endl;
+					string whole_str;
+					while (str.find(", ")!=-1)
+					{
+						string add_str = str.substr(str.find("\"")+1, str.find(", ")- str.find("\"")-2);
+						//cout << "add_str: "<<add_str << endl;
+						whole_str += add_str;
+						str = str.substr(str.find(", ") + 2);
+					}
+					whole_str += str.substr(str.find("\"") + 1, str.length() - 2);
+					cout <<"The merged string is \""<< whole_str <<"\"."<< endl;
+				}
 				break;
 			}
 			/**再加两个判断，防止影响后面**/
