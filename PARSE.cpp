@@ -437,7 +437,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				else if (input_upper.find(" CONCAT_WS(") != -1)
 				{
 					string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
-					cout << str << endl;
+					//cout << str << endl;
 					string whole_str;
 					string seperation;
 					bool is_seperation = true;
@@ -462,6 +462,15 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				}
 				break;
 			}
+			/**此处是数字函数**/
+			if (input_upper.find(" ABS(") != -1)
+			{
+				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
+				//cout << str << endl;
+				cout << abs(stod(str))<< endl;
+				break;
+			}
+
 			/**再加两个判断，防止影响后面**/
 			else if (input_upper.find(" FROM ") == -1 && input_upper.find(" INTO ") == -1 && (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("*") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1))
 			{
