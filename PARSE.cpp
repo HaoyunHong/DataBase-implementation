@@ -389,12 +389,12 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 	}
 
 	else if (ele1 == "SELECT")
-	//SELECT COLNAME FROM TBNAME WHERE ...;
-	//SELECT COLNAME INTO OUTPUTFILE FROM TBNAME WHERE ...;
-	//SELECT COUNT(expression) from TBNAME; (这里如果出现COUNT就不会出现其他列名,和第一种情况一起处理)
-	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name, ...; (这里SELECT,COUNT只能作用于GROUP的列）
-	//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name, ... ORDER BY ...; (这里ORDER只能作用于GROUP的列或者COUNT）
-	//SELECT stu_name, ... FROM TBNAME1 UNION (ALL) SELECT stu_name, ... FROM TBNAME2 ORDER BY stu_name; (这里默认第一个出现的列为整合列，ORDER只能作用于整合列,...中的列数目必须相同,表头按TBNAME1的列名输出)
+		//SELECT COLNAME FROM TBNAME WHERE ...;
+		//SELECT COLNAME INTO OUTPUTFILE FROM TBNAME WHERE ...;
+		//SELECT COUNT(expression) from TBNAME; (这里如果出现COUNT就不会出现其他列名,和第一种情况一起处理)
+		//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name, ...; (这里SELECT,COUNT只能作用于GROUP的列）
+		//SELECT stu_name, COUNT(expression) from TBNAME GROUP BY stu_name, ... ORDER BY ...; (这里ORDER只能作用于GROUP的列或者COUNT）
+		//SELECT stu_name, ... FROM TBNAME1 UNION (ALL) SELECT stu_name, ... FROM TBNAME2 ORDER BY stu_name; (这里默认第一个出现的列为整合列，ORDER只能作用于整合列,...中的列数目必须相同,表头按TBNAME1的列名输出)
 	{
 		std::vector<std::string> col_name;
 		std::vector<std::string> tb_name;
@@ -408,8 +408,19 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		{
 			string input_upper;
 			Transform(input, input_upper);
+			/**此处是select后面关于字符串的小函数**/
+			if (input_upper.find(" AS ") != -1)
+			{
+				//此处实现的两个计算字符串长度的函数（同功能）
+				if (input_upper.find(" CHAR_LENGTH(") != -1 || input_upper.find(" CHARACTER_LENGTH") != -1)
+				{
+					string str = input.substr(input.find("(") + 2, input.find(")") - input.find("(")-3);
+					cout <<"The length of the entered string \""<< str<<"\" is "<<str.length()<<"." << endl;
+				}
+				break;
+			}
 			/**再加两个判断，防止影响后面**/
-			if (input_upper.find(" FROM ") == -1 && input_upper.find(" INTO ") == -1 && (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("*") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1))
+			else if (input_upper.find(" FROM ") == -1 && input_upper.find(" INTO ") == -1 && (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("*") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1))
 			{
 				stringstream iss(input_upper); //读进来作计算器处理
 				string select;
@@ -593,7 +604,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 					if (col_name[i].find('.') == -1 && col_name[i] != "*")
 					{
 						cout << "Invalid input : expect mark '.' between tablename and column name, found in"
-							 << "\"" << col_name[i] << "\"" << endl;
+							<< "\"" << col_name[i] << "\"" << endl;
 						break;
 					}
 					int pos = col_name[i].find('.');
@@ -983,7 +994,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			}
 		}
 		curTb->load_data_from_file(file_name, col_name);
-	} 
+	}
 	else if (ele1 == "SAVE")
 	{
 		string nm, nm0;
