@@ -474,7 +474,21 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			{
 				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
 				//cout << str << endl;
-				cout << acos(stod(str)) << endl;
+				cout << acos(stod(str))*180/3.1415926535 <<" degree"<< endl;
+				break;
+			}
+			if (input_upper.find(" ASIN(") != -1)
+			{
+				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
+				//cout << str << endl;
+				cout << asin(stod(str))*180/3.1415926535 <<" degree"<< endl;
+				break;
+			}
+			if (input_upper.find(" ATAN(") != -1)
+			{
+				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
+				//cout << str << endl;
+				cout << atan(stod(str))*180/3.1415926535 <<" degree"<< endl;
 				break;
 			}
 
