@@ -1,12 +1,12 @@
 CREATE DATABASE CAFE;
 USE CAFE;
 CREATE TABLE menu(price INT, cost INT, kind CHAR, PRIMARY KEY(kind));
-INSERT INTO menu(price, cost, kind) VALUES (15, 5, "milk coffee");
-INSERT INTO menu(price, cost, kind) VALUES (20, 8, "milk cake");
-INSERT INTO menu(price, cost, kind) VALUES (30, 12, "honey waffle");
-INSERT INTO menu(price, cost, kind) VALUES (15, 5, "fruit cake");
-INSERT INTO menu(price, cost, kind) VALUES (22, 10, "ice cream cake");
-INSERT INTO menu(price, cost, kind) VALUES (20, 8, "honey cake");
+INSERT INTO menu(price, cost, kind) VALUES (15, 5, "milk_coffee");
+INSERT INTO menu(price, cost, kind) VALUES (20, 8, "milk_cake");
+INSERT INTO menu(price, cost, kind) VALUES (30, 12, "honey_waffle");
+INSERT INTO menu(price, cost, kind) VALUES (15, 5, "fruit_cake");
+INSERT INTO menu(price, cost, kind) VALUES (22, 10, "ice_cream_cake");
+INSERT INTO menu(price, cost, kind) VALUES (20, 8, "honey_cake");
 SELECT * from menu WHERE kind LIKE '%cake';
 SELECT price from menu WHERE kind LIKE '%cake';
 DROP DATABASE CAFE;

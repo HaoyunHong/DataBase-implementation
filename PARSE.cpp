@@ -296,7 +296,8 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				}
 				else
 				{
-					char val = (*itv)[0];
+					//std::string val = (*itv)[0];
+					std::string val = (*itv);
 					curTb->Insert(*ita, val);
 				}
 			}
@@ -591,7 +592,9 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 					if (tbname_upper == "WHERE") //如果是where，证明是一个输出的语句，按正常情况操作
 					{
 						condition = "";
-						getline(is, condition, ';');						//把whereclause读进condition进行后续操作
+						getline(is, condition, ';');
+						//cout<<condition<<endl;
+						//把whereclause读进condition进行后续操作
 						auto outorder = curTb->Select(col_name, condition); //处理，找到符合条件的行存入outorder静态vector
 						curTb->show_output_from_select(col_name, outorder); //把符合条件的每一行输出
 					}
@@ -1283,10 +1286,10 @@ std::string PARSE::constify(std::string condition, const std::vector<std::string
 					}
 					else if (ptb->GetType(COLNM[i]) == _CHAR)
 					{
-						mid = "   "; //三个空格
-						mid[0] = '\"';
-						mid[2] = '\"';
-						mid[1] = ptb->TableMap[COLNM[i]]->Get_CHAR_Value(line_num);
+						//mid = "   "; //三个空格
+						mid.push_back( '\"');
+						mid+=ptb->TableMap[COLNM[i]]->Get_CHAR_Value(line_num);
+						mid.push_back('\"');
 					}
 					condition = left + mid + right;
 					ptb = nullptr;

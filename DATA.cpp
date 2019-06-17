@@ -145,12 +145,12 @@ ostream &operator<<(ostream &out, DOUBLE &d)
 	return out;
 }
 
-void CHAR::SetValue(char d)
+void CHAR::SetValue(std::string d)
 {
 	Value = d;
 }
 
-char CHAR::GetValue()
+std::string CHAR::GetValue()
 {
 	return Value;
 }
@@ -207,3 +207,5 @@ ostream &operator<<(ostream &out, CHAR &d)
 	}
 	return out;
 }
+
+

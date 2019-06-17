@@ -22,7 +22,7 @@ public:
 	void addcolumn(std::string clname, DataType ctype, std::vector<ConstraintType> &Constraints);			  //添加一列；参数：(列名，类型，一个存放限制信息的vector)
 	void SetKey(std::string keyname);																		  //设置键值为keyname
 	void Insert(std::string cname, int d);																	  //在cname列添加一条数据；参数：(列名，数据)
-	void Insert(std::string cname, char d);																	  //在cname列添加一条数据；参数：(列名，数据)
+	void Insert(std::string cname, std::string d);																	  //在cname列添加一条数据；参数：(列名，数据)
 	void Insert(std::string cname, double d);																  //在cname列添加一条数据；参数：(列名，数据)
 	void InsertNull(std::string cname, DataType type);														  //向cname列加入NULL数据
 	void Update(std::string aname, int avalue, std::string condition);										  //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；

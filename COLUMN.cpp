@@ -20,7 +20,7 @@ void COLUMN::update(int k, int v)
 	dynamic_cast<INT *>(ColumnData[k])->SetValue(v);
 }
 
-void COLUMN::update(int k, char v)
+void COLUMN::update(int k, std::string v)
 { //更新第k+1个数据为v
 	dynamic_cast<CHAR *>(ColumnData[k])->SetValue(v);
 }
@@ -29,6 +29,7 @@ void COLUMN::update(int k, double v)
 { //更新第k+1个数据为v
 	dynamic_cast<DOUBLE *>(ColumnData[k])->SetValue(v);
 }
+
 
 int COLUMN::Get_INT_Value(int k)
 {
@@ -40,10 +41,11 @@ double COLUMN::Get_DOUBLE_Value(int k)
 	return dynamic_cast<DOUBLE *>(ColumnData[k])->GetValue();
 }
 
-char COLUMN::Get_CHAR_Value(int k)
+std::string COLUMN::Get_CHAR_Value(int k)
 {
 	return dynamic_cast<CHAR *>(ColumnData[k])->GetValue();
 }
+
 
 void COLUMN::push_back(int d)
 { //直接加入数据
@@ -58,13 +60,13 @@ void COLUMN::push_back_null(int d)
 	ColumnData.push_back(it);
 }
 
-void COLUMN::push_back(char d)
+void COLUMN::push_back(std::string d)
 { //直接加入数据
 	pDATA it = new CHAR(d);
 	ColumnData.push_back(it);
 }
 
-void COLUMN::push_back_null(char d)
+void COLUMN::push_back_null(std::string d)
 { //直接加入数据NULL
 	pDATA it = new CHAR();
 	it->SetNull();
@@ -117,7 +119,7 @@ void COLUMN::SetDefault(int d)
 	Default = it;
 }
 
-void COLUMN::SetDefault(char d)
+void COLUMN::SetDefault(std::string d)
 {
 	pDATA it = new CHAR(d);
 	Default = it;
@@ -148,3 +150,4 @@ CHAR *COLUMN::Get_CHAR_Data(int k)
 {
 	return dynamic_cast<CHAR *>(ColumnData[k]);
 }
+
