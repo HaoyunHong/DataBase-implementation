@@ -409,13 +409,13 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			string input_upper;
 			Transform(input, input_upper);
 			/**此处是select后面关于字符串的小函数**/
-			if (input_upper.find(" AS ") != -1|| input_upper.find(")AS ") != -1)
+			if (input_upper.find(" AS ") != -1 || input_upper.find(")AS ") != -1)
 			{
 				//此处实现的两个计算字符串长度的函数（同功能）
 				if (input_upper.find(" CHAR_LENGTH(") != -1 || input_upper.find(" CHARACTER_LENGTH(") != -1)
 				{
-					string str = input.substr(input.find("(") + 2, input.find(")") - input.find("(")-3);
-					cout <<"The length of the entered string \""<< str<<"\" is "<<str.length()<<"." << endl;
+					string str = input.substr(input.find("(") + 2, input.find(")") - input.find("(") - 3);
+					cout << "The length of the entered string \"" << str << "\" is " << str.length() << "." << endl;
 				}
 				//此处是实现连接字符串的函数
 				else if (input_upper.find(" CONCAT(") != -1)
@@ -423,15 +423,15 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 					string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
 					//cout << str << endl;
 					string whole_str;
-					while (str.find(", ")!=-1)
+					while (str.find(", ") != -1)
 					{
-						string add_str = str.substr(str.find("\"")+1, str.find(", ")- str.find("\"")-2);
+						string add_str = str.substr(str.find("\"") + 1, str.find(", ") - str.find("\"") - 2);
 						//cout << "add_str: "<<add_str << endl;
 						whole_str += add_str;
 						str = str.substr(str.find(", ") + 2);
 					}
 					whole_str += str.substr(str.find("\"") + 1, str.length() - 2);
-					cout <<"The merged string is \""<< whole_str <<"\"."<< endl;
+					cout << "The merged string is \"" << whole_str << "\"." << endl;
 				}
 				//合并多个字符串并添加分隔符
 				else if (input_upper.find(" CONCAT_WS(") != -1)
@@ -452,8 +452,8 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 						else
 						{
 							//cout << "add_str: "<<add_str << endl;
-							whole_str += add_str+seperation;
-							
+							whole_str += add_str + seperation;
+
 						}
 						str = str.substr(str.find(", ") + 2);
 					}
@@ -467,28 +467,35 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			{
 				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
 				//cout << str << endl;
-				cout << abs(stod(str))<< endl;
+				cout << abs(stod(str)) << endl;
 				break;
 			}
 			if (input_upper.find(" ACOS(") != -1)
 			{
 				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
 				//cout << str << endl;
-				cout << acos(stod(str))*180/3.1415926535 <<" degree"<< endl;
+				cout << acos(stod(str)) * 180 / 3.1415926535 << " degree" << endl;
 				break;
 			}
 			if (input_upper.find(" ASIN(") != -1)
 			{
 				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
 				//cout << str << endl;
-				cout << asin(stod(str))*180/3.1415926535 <<" degree"<< endl;
+				cout << asin(stod(str)) * 180 / 3.1415926535 << " degree" << endl;
 				break;
 			}
 			if (input_upper.find(" ATAN(") != -1)
 			{
 				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
 				//cout << str << endl;
-				cout << atan(stod(str))*180/3.1415926535 <<" degree"<< endl;
+				cout << atan(stod(str)) * 180 / 3.1415926535 << " degree" << endl;
+				break;
+			}
+			if (input_upper.find(" CEIL(") != -1 || input_upper.find(" CEILING(") != -1)
+			{
+				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
+				//cout << str << endl;
+				cout << stoi(str) + 1 << endl;
 				break;
 			}
 
