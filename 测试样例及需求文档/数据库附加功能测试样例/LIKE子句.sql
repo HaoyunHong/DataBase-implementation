@@ -1,11 +1,11 @@
 CREATE DATABASE CAFE;
 USE CAFE;
 CREATE TABLE menu(price INT, cost INT, kind CHAR, PRIMARY KEY(kind));
-INSERT INTO menu(price, cost, kind) VALUES (15, 5, "milk coffee");
-INSERT INTO menu(price, cost, kind) VALUES (20, 8, "milk cake");
+INSERT INTO menu(price, cost, kind) VALUES (15, 5, "milk_coffee");
+INSERT INTO menu(price, cost, kind) VALUES (20, 8, "milk_cake");
 INSERT INTO menu(price, cost, kind) VALUES (30, 12, "abc");
-INSERT INTO menu(price, cost, kind) VALUES (15, 5, "red rose cake");
-INSERT INTO menu(price, cost, kind) VALUES (22, 10, "pink rose cake");
+INSERT INTO menu(price, cost, kind) VALUES (15, 5, "red_rose_cake");
+INSERT INTO menu(price, cost, kind) VALUES (22, 10, "pink_rose_cake");
 INSERT INTO menu(price, cost, kind) VALUES (20, 8, "ki");
 SELECT * from menu WHERE kind LIKE '%cake';
 SELECT price from menu WHERE kind LIKE '%cake';
