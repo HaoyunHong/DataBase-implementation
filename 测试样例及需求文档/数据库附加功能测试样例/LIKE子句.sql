@@ -21,6 +21,3 @@ SELECT price, kind from menu WHERE kind LIKE '_i';
 SELECT price from menu WHERE kind LIKE 'k_';
 SELECT price, kind from menu WHERE kind LIKE 'k_';
 DROP DATABASE CAFE;
- /*可以选择列输出*/
- /*支持单引号或者双引号*/
- /*支持选取任意已有列输出*/
