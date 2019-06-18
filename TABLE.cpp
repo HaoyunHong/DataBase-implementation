@@ -20,6 +20,7 @@ void split(const string &s, vector<string> &sv, const char flag)
 	return;
 }
 
+
 DataType TABLE::GetType(std::string name)
 {
 	for (int i = 0; i < ColumnName.size(); i++)
@@ -519,25 +520,77 @@ bool TABLE::Judge(string condition, int k)
 		//cout << "like_expression: " << like_expression << endl;
 		like_expression = like_expression.substr(1, like_expression.length() - 2);
 		//cout << "like_expression: " << like_expression << endl;
+		COLUMN *p = this->GetColumn(column_name);
 		string key_string;//储存模糊匹配的关键词
-		if (like_expression[0] == '%')
+		string str = p->Get_CHAR_Data(k)->GetValue();
+		if (like_expression[like_expression.length() - 1] == '%'&&like_expression[0] == '%')
+		{
+			key_string = like_expression.substr(1, like_expression.length() - 2);
+			if (str.find(key_string) > 0 && str.find(key_string) < str.length() - key_string.length())
+			{
+				return 1;
+			}
+			return 0;
+		}
+		else if (like_expression[0] == '%')
 		{
 			key_string = like_expression.substr(1);
+			if (key_string.length() > str.length())
+			{
+				return 0;
+			}
+			else if (str.substr(str.length() - key_string.length(), key_string.length()) ==key_string)
+			{
+				return 1;
+			}
+			else
+				return 0;
+			
 		}
 		else if (like_expression[like_expression.length() - 1] == '%')
 		{
-			key_string = like_expression.substr(1);
+			key_string = like_expression.substr(0, like_expression.length() - 1);
+			if (str.substr(0, key_string.length()) == key_string)
+			{
+				return 1;
+			}
+			return 0;
 		}
-		//cout << key_string << endl;
-		COLUMN *p = this->GetColumn(column_name);
 		
-		string str = p->Get_CHAR_Data(k)->GetValue();
-		//cout << "str: "<<str << endl;
-		if (str.find(key_string)!=-1)
+		else if (like_expression.length()==3 && like_expression[0] == '_'&&like_expression[2] == '_')
 		{
-			cout << *(p->Get_CHAR_Data(k)) << endl;
+			key_string = like_expression.substr(1, like_expression.length()-1);
+			if (str.length() == 3 && str.substr(1,1)== key_string)
+			{
+				return 1;
+			}
+			return 0;
 		}
-		return 0;
+		else if (like_expression.length() == 2 && like_expression[0] == '_')
+		{
+			key_string = like_expression.substr(1);
+			if (str.length() == 2 && str.substr(1)==key_string)
+			{
+				return 1;
+			}
+			return 0;
+		}
+		else if (like_expression.length() == 2 && like_expression[1] == '_')
+		{
+			key_string = like_expression.substr(0,1);
+			if (str.length()==2 && str.substr(0,1) == key_string)
+			{
+				return 1;
+			}
+			return 0;
+		}
+		else
+		{
+			cout << "The LIKE sentence is invalid.Please enter again~" << endl;
+			return 0;
+		}
+	
+		
 	}
 	else
 	{
@@ -842,6 +895,7 @@ bool TABLE::Judge(string condition, int k)
 			}
 			return Res[0];
 		}
+		return 0;
 	
 	}
 	

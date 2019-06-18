@@ -1,0 +1,38 @@
+price   cost    kind
+20      8       milk_cake
+22      10      pink_rose_cake
+15      5       red_rose_cake
+price
+20
+22
+15
+price   kind
+20      milk_cake
+22      pink_rose_cake
+15      red_rose_cake
+price   cost    kind
+20      8       milk_cake
+15      5       milk_coffee
+price
+20
+15
+price   cost
+20      8
+15      5
+price   cost    kind
+22      10      pink_rose_cake
+15      5       red_rose_cake
+price
+22
+15
+price   cost
+22      10
+15      5
+price   cost    kind
+20      8       ki
+price   kind
+20      ki
+price
+20
+price   kind
+20      ki
