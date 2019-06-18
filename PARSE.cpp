@@ -509,6 +509,10 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				string whole_expression = input_upper.substr(7);
 				whole_expression = whole_expression_standardize(whole_expression);
 				cout << whole_expression << endl;
+				if(input_upper.find(" AND ") == -1 && input_upper.find(" OR ") == -1 && input_upper.find(" XOR ") != -1 || input_upper.find(" NOT ") != -1 || input_upper.find(" ! ") != -1)
+				{
+
+				}
 				string num_result = arithmetic_calculator(whole_expression);
 				cout << setprecision(3) << num_result << endl; //保留三位有效数字
 				break;
@@ -1136,10 +1140,28 @@ string PARSE::whole_expression_standardize(string whole_expression)
 			i++;
 		}
 	}
+
+	while(copy_whole_expression.find(" !")!=-1 || copy_whole_expression.find("! ")!=-1 ||copy_whole_expression.find(" NOT ")!=-1 )
+	{
+		if(copy_whole_expression.find(" !")!=-1)
+		{
+			copy_whole_expression = copy_whole_expression.substr(copy_whole_expression.find(" !"))+copy_whole_expression.substr(copy_whole_expression.find(" !")+1);
+		}
+		if(copy_whole_expression.find("! ")!=-1)
+		{
+			copy_whole_expression = copy_whole_expression.substr(copy_whole_expression.find("! ")+1)+copy_whole_expression.substr(copy_whole_expression.find("! ")+2);
+		}
+		if(copy_whole_expression.find(" NOT ")!=-1)
+		{
+			copy_whole_expression = copy_whole_expression.substr(copy_whole_expression.find(" NOT ")+1);
+		}
+		
+	}
+
 	return copy_whole_expression.substr(0, i - 1);
 }
 
-int PARSE::P(string arithmetic_operator) //制定运算符优先级
+int PARSE::P(string arithmetic_operator) //制定算术运算符优先级
 {
 	if (arithmetic_operator == "+" || arithmetic_operator == "-")
 	{
@@ -1238,17 +1260,99 @@ string PARSE::arithmetic_calculator(string &whole_expression)
 				}
 			}
 		}
-		/*if (arithmetic == "#" && arithmetic_operators.top() == "#")
-		{
-			cout << "arithmetic_operators.top(): " << arithmetic_operators.top() << endl;
-			//arithmetic_operators.pop();
-			break;
-		}
-		cout << "arithmetic_operators.top(): " << arithmetic_operators.top() << endl;
-		cout << "numbers.top(): " << numbers.top() << endl;*/
 	}
 	return to_string(numbers.top());
 }
+
+int PARSE::PL(string logic_operator) //制定逻辑运算符优先级
+{
+	if (logic_operator == "OR" || logic_operator == "XOR")
+	{
+		return 1;
+	}
+	if (logic_operator == "AND")
+	{
+		return 2;
+	}
+	if (logic_operator == "#")
+	{
+		return 0;
+	}
+	return -1;
+}
+
+//逻辑计算器
+string PARSE::logic_calculator(string &whole_expression)
+{
+	istringstream s(whole_expression + " # "); //"#"表示算术表达式结束
+	std::stack<string> logic_operators;   //运算符栈
+	std::stack<double> numbers;				   //数据栈
+	logic_operators.push("#");
+	string logic;
+	bool used = true;
+	while (!logic_operators.empty())
+	{
+		if (s && used)
+		{
+			s >> logic;
+		}
+		if (logic != "AND" && logic != "OR" && logic != "XOR" && logic != "NOT" && logic != "!")
+		{
+			if(logic.find("NOT"))
+			{
+				logic = !stoi(logic.substr(logic.find("NOT")+3));
+			}
+			if( logic.find("!"))
+			{
+				logic = !stoi(logic.substr(logic.find("NOT")+1));
+			}
+			numbers.push(stod(logic));
+			continue;
+		}
+
+		else
+		{
+			if (PL(logic_operators.top()) < PL(logic))
+			{
+				used = true;
+				logic_operators.push(logic);
+			}
+			else
+			{
+				if (logic == "#" && logic_operators.top() == "#")
+				{
+					break;
+				}
+				used = false;
+				double number2 = numbers.top();
+				numbers.pop();
+				double number1 = numbers.top();
+				numbers.pop();
+				string op = logic_operators.top();
+				logic_operators.pop();
+				if (to_string(number2) == "NULL" || to_string(number1) == "NULL")
+				{
+					return "NULL";
+				}
+				if (op == "AND")
+				{
+					numbers.push(number1 && number2);
+				}
+				if (op == "OR")
+				{
+					numbers.push(number1 || number2);
+				}
+				if (op == "XOR")
+				{
+					numbers.push((!number1 || number2)&&(number1 || !number2));
+				}
+			}
+		}
+	}
+	return to_string(numbers.top());
+}
+
+
 
 std::string PARSE::constify(std::string condition, const std::vector<std::string> &tbname, TABLE *ptb, int line_num, const std::vector<int> outorder, const std::vector<std::string> &col_name, const std::vector<std::string> &col_tb_name)
 {
