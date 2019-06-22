@@ -501,19 +501,18 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			}
 
 			/**再加两个判断，防止影响后面**/
-			else if (input_upper.find(" FROM ") == -1 && input_upper.find(" INTO ") == -1 && (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("*") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1))
+			else if (input_upper.find(" FROM ") == -1 && input_upper.find(" INTO ") == -1 && (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("*") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1|| input_upper.find(" AND ") != -1 || input_upper.find(" OR ") != -1 || input_upper.find(" XOR ") != -1 || input_upper.find(" NOT ") != -1 || input_upper.find(" ! ") != -1))
 			{
 				stringstream iss(input_upper); //读进来作计算器处理
 				string select;
 				iss >> select;
 				string whole_expression = input_upper.substr(7);
 				whole_expression = whole_expression_standardize(whole_expression);
-				cout << whole_expression << endl;
-				if(input_upper.find(" AND ") == -1 && input_upper.find(" OR ") == -1 && input_upper.find(" XOR ") != -1 || input_upper.find(" NOT ") != -1 || input_upper.find(" ! ") != -1)
+				if (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("*") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1)
 				{
-
+					cout << whole_expression << endl;
 				}
-				string num_result = arithmetic_calculator(whole_expression);
+				string num_result = logic_calculator(whole_expression);
 				cout << setprecision(3) << num_result << endl; //保留三位有效数字
 				break;
 			}
@@ -1125,10 +1124,10 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 
 string PARSE::whole_expression_standardize(string whole_expression)
 {
-	string copy_whole_expression = whole_expression + ";";
+	string copy_whole_expression = whole_expression;
 	int length = whole_expression.length();
 	int i = 1;
-	while (i < copy_whole_expression.length() && copy_whole_expression[i] != ':')
+	while (i < copy_whole_expression.length() && copy_whole_expression[i] != ';')
 	{
 		if (copy_whole_expression[i] == '+' || copy_whole_expression[i] == '-' || copy_whole_expression[i] == '*' || copy_whole_expression[i] == '/' || copy_whole_expression[i] == '%')
 		{
@@ -1141,24 +1140,21 @@ string PARSE::whole_expression_standardize(string whole_expression)
 		}
 	}
 
-	while(copy_whole_expression.find(" !")!=-1 || copy_whole_expression.find("! ")!=-1 ||copy_whole_expression.find(" NOT ")!=-1 )
+	/**我希望not或!是和它后面接的数连在一起的**/
+	while (copy_whole_expression.find("! ") != -1 || copy_whole_expression.find("NOT ") != -1)
 	{
-		if(copy_whole_expression.find(" !")!=-1)
+		if (copy_whole_expression.find("! ") != -1)
 		{
-			copy_whole_expression = copy_whole_expression.substr(copy_whole_expression.find(" !"))+copy_whole_expression.substr(copy_whole_expression.find(" !")+1);
+			copy_whole_expression = copy_whole_expression.substr(0,copy_whole_expression.find("! ")) +" !"+ copy_whole_expression.substr(copy_whole_expression.find("! ") + 2);
+			//cout << copy_whole_expression << endl;
 		}
-		if(copy_whole_expression.find("! ")!=-1)
+		if (copy_whole_expression.find("NOT ") != -1)
 		{
-			copy_whole_expression = copy_whole_expression.substr(copy_whole_expression.find("! ")+1)+copy_whole_expression.substr(copy_whole_expression.find("! ")+2);
+			copy_whole_expression = copy_whole_expression.substr(0,copy_whole_expression.find("NOT ")) + "NOT" + copy_whole_expression.substr(copy_whole_expression.find("NOT ") +4);
+			//cout << copy_whole_expression << endl;
 		}
-		if(copy_whole_expression.find(" NOT ")!=-1)
-		{
-			copy_whole_expression = copy_whole_expression.substr(copy_whole_expression.find(" NOT ")+1);
-		}
-		
 	}
-
-	return copy_whole_expression.substr(0, i - 1);
+	return copy_whole_expression.substr(0, i);
 }
 
 int PARSE::P(string arithmetic_operator) //制定算术运算符优先级
@@ -1286,7 +1282,7 @@ string PARSE::logic_calculator(string &whole_expression)
 {
 	istringstream s(whole_expression + " # "); //"#"表示算术表达式结束
 	std::stack<string> logic_operators;   //运算符栈
-	std::stack<double> numbers;				   //数据栈
+	std::stack<int> numbers;				   //数据栈
 	logic_operators.push("#");
 	string logic;
 	bool used = true;
@@ -1295,18 +1291,23 @@ string PARSE::logic_calculator(string &whole_expression)
 		if (s && used)
 		{
 			s >> logic;
+			//cout << logic << endl;
 		}
-		if (logic != "AND" && logic != "OR" && logic != "XOR" && logic != "NOT" && logic != "!")
+		if (logic != "#" && logic != "AND" && logic != "OR" && logic != "XOR" && logic != "NOT" && logic != "!")
 		{
-			if(logic.find("NOT"))
+			if (logic.find("NOT")!=-1)
 			{
-				logic = !stoi(logic.substr(logic.find("NOT")+3));
+				//cout << logic.substr(logic.find("NOT") + 3) << endl;
+				//cout << stoi(logic.substr(logic.find("NOT") + 3)) << endl;
+				logic = (stoi(logic.substr(logic.find("NOT") + 3))) > 0 ? "0" : "1";
+				//cout << logic << endl;
 			}
-			if( logic.find("!"))
+			if (logic.find("!")!=-1)
 			{
-				logic = !stoi(logic.substr(logic.find("NOT")+1));
+				logic = (stoi(logic.substr(logic.find("!") + 1)) > 0) ? "0" : "1";
+				//cout << logic << endl;
 			}
-			numbers.push(stod(logic));
+			numbers.push(stoi(logic));
 			continue;
 		}
 
@@ -1344,12 +1345,17 @@ string PARSE::logic_calculator(string &whole_expression)
 				}
 				if (op == "XOR")
 				{
-					numbers.push((!number1 || number2)&&(number1 || !number2));
+					numbers.push((!number1 || number2) && (number1 || !number2));
 				}
 			}
 		}
 	}
-	return to_string(numbers.top());
+	if (numbers.top() == 0)
+	{
+		return "false";
+	}
+	else
+		return "true";
 }
 
 
@@ -1391,8 +1397,8 @@ std::string PARSE::constify(std::string condition, const std::vector<std::string
 					else if (ptb->GetType(COLNM[i]) == _CHAR)
 					{
 						//mid = "   "; //三个空格
-						mid.push_back( '\"');
-						mid+=ptb->TableMap[COLNM[i]]->Get_CHAR_Value(line_num);
+						mid.push_back('\"');
+						mid += ptb->TableMap[COLNM[i]]->Get_CHAR_Value(line_num);
 						mid.push_back('\"');
 					}
 					condition = left + mid + right;
