@@ -496,7 +496,14 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			{
 				string str = input.substr(input.find("(") + 1, input.find(")") - input.find("(") - 1);
 				//cout << str << endl;
-				cout << stoi(str) + 1 << endl;
+				if(stod(str)-stoi(str)==0)
+				{
+					cout << stoi(str) << endl;
+				}
+				else
+				{
+					cout << stoi(str)+1 << endl;
+				}
 				break;
 			}
 
