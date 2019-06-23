@@ -66,44 +66,9 @@
 其中write_into_outfile函数声明如下：
 
 	void TABLE::write_into_outfile(const std::string &out_file_name, const std::vector<int> &outorder, const std::vector<std::string> &col_name);
-	//函数实现位于TABLE.cpp的第1056行
+	//函数实现位于TABLE.cpp的第1215行
 
 其实现中包含了对输出行数是否为0的判断（如为0则不需要进行输出），以及对"NULL"数据的特殊处理。
-
-同时，我们添加了附加功能，支持在导出语句的后端增加whereclause语句，同时支持对任意指定列的输出,附加功能的实现得益于第一部分对原代码中select函数的修改。
-
-我们的测试代码如下（见文件夹"输出到文件支持whereclause语句"）：
-
-	CREATE DATABASE OOP;
-	USE OOP;
-	CREATE TABLE poi(lkj INT, mnb INT, bvc INT, dfj CHAR, PRIMARY KEY(mnb));
-	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (1, 2, 3, "a");
-	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (2, 3, 4, "a");
-	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (3, 4, 5, "a");
-	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (4, 5, 6, "a");
-	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (5, 6, 7, "a");
-	INSERT INTO poi(mnb, bvc, dfj) VALUES (7, 7, "a");
-	DELETE FROM poi WHERE lkj>3 OR mnb=7 AND lkj=10;
-	SELECT * from poi;
-	SELECT * INTO OUTFILE 'output_file' FROM poi WHERE bvc>4;
-	SELECT bvc INTO OUTFILE 'outout_file2' FROM poi WHERE bvc<7;
-	DROP DATABASE OOP;
-
-相应的输出如下：
-
-	powershell输出：
-	lkj     mnb     bvc     dfj
-	1       2       3       a
-	2       3       4       a
-	3       4       5       a
-	NULL    7       7       a
-	输出文件output_file:
-	3	4	5	a	
-	NULL	7	7	a	
-	输出文件outout_file2:
-	3	
-	4	
-	5	
 
 
 导入：
@@ -112,9 +77,11 @@
 
 	void TABLE::load_data_from_file(const std::string &in_file_name,
 	const std::vector<<std::string>> &col_name);
-	//函数实现位于TABLE.cpp的第1166行
+	//函数实现位于TABLE.cpp的第1325行
 
-函数内部主要利用ifstream类相关方法读取文件中的数据。
+* 函数内部主要利用ifstream类相关方法读取文件中的数据，因为存档和读档的格式统一，所以此处不再赘述文档结构
+* 通过查找命令中的列名并一一对应，再从输入文件中读取数据，按行利用第一阶段的insert相关方法插入表
+  
 由于LOAD语句关键词的特殊性，我们增加了在输入不合法时的报错语句，如：
 
 	if (ele0_upper != "DATA")
@@ -127,63 +94,8 @@
 	{
 		cout << "invalid command :: expect \"INFILE\" here but not found." << endl;
 		return;
-	}
-同时，我们增加了对于导入信息不完整时的默认值填充处理，对没有输入的列默认用0（int类型）/0.0（double类型）/char(0)（char类型）填充：
+	}//与此相似的还有几个
 
-	if (col_name.size() != ColumnName.size())//如果命令输入的列数少于总列数
-	{
-		for (int i = 0; i < ColumnName.size(); i++)
-		{
-			col_map[ColumnName[i]] = false;
-		}
-		for (int i = 0; i < col_name.size(); i++)
-		{
-			col_map[col_name[i]] = true; //代表这些列会被输入
-		}
-		for (int i = 0; i < ColumnName.size(); i++)
-		{
-			if (!col_map[ColumnName[i]]) //如果这个列没有接受输入数据？？
-			{
-				cout << "Column " << ColumnName[i] << " does not have any input." << endl;
-				if (GetType(ColumnName[i]) == _INT)
-				{
-					cout << "Automatically filling 0(int)as default." << endl;
-				}
-				else if (GetType(ColumnName[i]) == _DOUBLE)
-				{
-					cout << "Automatically filling 0.0(double) as default." << endl;
-				}
-				else if (GetType(ColumnName[i]) == _CHAR)
-				{
-					cout << "Automatically filling 0(ascii to char) as default." << endl;
-				}
-			}
-		}
-	}
-
-例如，输入测试代码：
-
-	CREATE DATABASE OOP;
-	USE OOP;
-	CREATE TABLE oop_info(stu_id INT NOT NULL, stu_name CHAR, stu_height INT, PRIMARY KEY(stu_id));
-	LOAD DATA INFILE 'output_file' INTO TABLE oop_info(stu_id, stu_name);
-	SELECT * FROM oop_info;
-	DROP DATABASE OOP;
-
-其中output_file内容为：
-
-	2018011343	a
-	2018011344	b
-	2018011345	c
-
-此处，输入文件中只有两列，但表有三列，程序会自动用默认值补全没有导入要求的列，并在程序运行界面给予提示，输出结果为：
-
-	Column stu_height does not have any input.
-	Automatically filling 0(int) as default.
-	stu_id	stu_name	stu_height	
-	2018011343	a	0	
-	2018011344	b	0	
-	2018011345	c	0	
 ### 4、第二阶段附加功能实现
 #### 4.1、多表whereclause语句
 ##### 设计思路：
@@ -246,14 +158,14 @@
 	system("mkdir -p data");
 这一语句创建名为"data"的文件夹作为存档的路径文件夹，便于存档和之后访问
 
-之后，创建
+之后，创建如下三类.txt文件
 
 	index.txt 
 	[database_name].txt 
 	[databasename.tablename].txt 
-index.txt为总目录，储存数据库数量以及每个数据库的名字；
-文件名如[database_name].txt的文件储存名为database_name的数据库的信息，包括表的数量以及每张表的名字；
-文件名如[database_name.table_name].txt的文件储存名为database_name的表中名为table_name的表的信息，包括列数、各列名称、各列数据类型、主键名字、每一列从第一行开始到最后一行的所有数据（每个单元格之间用'\t'分隔，每列之间用'\n'分隔）
+* index.txt为总目录，储存数据库数量以及每个数据库的名字；
+* 文件名如[database_name].txt的文件储存名为database_name的数据库的信息，包括表的数量以及每张表的名字；
+* 文件名如[database_name.table_name].txt的文件储存名为database_name的表中名为table_name的表的信息，包括列数、各列名称、各列数据类型、主键名字、每一列从第一行开始到最后一行的所有数据（每个单元格之间用'\t'分隔，每列之间用'\n'分隔）
 
 例如：现有数据库oop，fop，oop下有两张表：class1，class2，fop下有两张表，class3，class4.
 则data文件夹里将会存在以下文件：
@@ -484,6 +396,103 @@ ijn.cba.txt内容如下（//之后的部分是标注说明，本来不存在于�
 
 最后，对于文件读取的效率应该还有优化空间。
 
+#### 4.7、向文件导入数据时支持whereclause
+
+* 我们支持在导出语句的后端增加whereclause语句。
+* 同时支持对任意指定列的输出,附加功能的实现得益于第一部分对原代码中select函数的修改。
+* 实现方法：仿照SELECT中对whereclause的处理，将输出到文件和判断是否符合要求的两个过程分开，实现对基础功能代码的高度复用
+
+测试代码如下（见文件夹"输出到文件支持whereclause语句"）：
+
+	CREATE DATABASE OOP;
+	USE OOP;
+	CREATE TABLE poi(lkj INT, mnb INT, bvc INT, dfj CHAR, PRIMARY KEY(mnb));
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (1, 2, 3, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (2, 3, 4, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (3, 4, 5, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (4, 5, 6, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (5, 6, 7, "a");
+	INSERT INTO poi(mnb, bvc, dfj) VALUES (7, 7, "a");
+	DELETE FROM poi WHERE lkj>3 OR mnb=7 AND lkj=10;
+	SELECT * from poi;
+	SELECT * INTO OUTFILE 'output_file' FROM poi WHERE bvc>4;
+	SELECT bvc INTO OUTFILE 'outout_file2' FROM poi WHERE bvc<7;
+	DROP DATABASE OOP;
+
+相应的输出如下：
+
+	powershell输出：
+	lkj     mnb     bvc     dfj
+	1       2       3       a
+	2       3       4       a
+	3       4       5       a
+	NULL    7       7       a
+	输出文件output_file:
+	3	4	5	a	
+	NULL	7	7	a	
+	输出文件outout_file2:
+	3	
+	4	
+	5	
+
+
+#### 4.8、从文件导入信息的默认值填充处理
+我们增加了对于导入信息不完整时的默认值填充处理，对没有输入的列默认用0（int类型）/0.0（double类型）/char(0)（char类型）填充：
+
+	if (col_name.size() != ColumnName.size())//如果命令输入的列数少于总列数
+	{
+		for (int i = 0; i < ColumnName.size(); i++)
+		{
+			col_map[ColumnName[i]] = false;
+		}
+		for (int i = 0; i < col_name.size(); i++)
+		{
+			col_map[col_name[i]] = true; //代表这些列会被输入
+		}
+		for (int i = 0; i < ColumnName.size(); i++)
+		{
+			if (!col_map[ColumnName[i]]) //如果这个列没有接受输入数据？？
+			{
+				cout << "Column " << ColumnName[i] << " does not have any input." << endl;
+				if (GetType(ColumnName[i]) == _INT)
+				{
+					cout << "Automatically filling 0(int)as default." << endl;
+				}
+				else if (GetType(ColumnName[i]) == _DOUBLE)
+				{
+					cout << "Automatically filling 0.0(double) as default." << endl;
+				}
+				else if (GetType(ColumnName[i]) == _CHAR)
+				{
+					cout << "Automatically filling 0(ascii to char) as default." << endl;
+				}
+			}
+		}
+	}
+
+例如，输入测试代码：
+
+	CREATE DATABASE OOP;
+	USE OOP;
+	CREATE TABLE oop_info(stu_id INT NOT NULL, stu_name CHAR, stu_height INT, PRIMARY KEY(stu_id));
+	LOAD DATA INFILE 'output_file' INTO TABLE oop_info(stu_id, stu_name);
+	SELECT * FROM oop_info;
+	DROP DATABASE OOP;
+
+其中output_file内容为：
+
+	2018011343	a
+	2018011344	b
+	2018011345	c
+
+此处，输入文件中只有两列，但表有三列，程序会自动用默认值补全没有导入要求的列，并在程序运行界面给予提示，输出结果为：
+
+	Column stu_height does not have any input.
+	Automatically filling 0(int) as default.
+	stu_id	stu_name	stu_height	
+	2018011343	a	0	
+	2018011344	b	0	
+	2018011345	c	0	
 
 
 
