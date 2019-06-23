@@ -10,6 +10,6 @@ $(exe) : $(obj)
 	$(pp) $^ -o $@ -lm -O2 -DONLINE_JUDGE -std=c++11
 
 *.o : *.cpp *.h
-	$(pp) $< -c *.o -lm -O2 -DONLINE_JUDGE -std=c++11
+	$(pp) $< -c -o *.o -lm -O2 -DONLINE_JUDGE -std=c++11
 clean:
 	rm $(obj) $(exe)
