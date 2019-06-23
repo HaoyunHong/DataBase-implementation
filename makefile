@@ -4,6 +4,8 @@ head = DATA.h TABLE.h COLUMN.h ALLBASES.h PARSE.h DATABASE.h
 obj = main.o DATA.o TABLE.o COLUMN.o ALLBASES.o PARSE.o
 cpp = main.cpp TABLE.cpp COLUMN.cpp ALLBASES.cpp PARSE.cpp
 
+.PHONY: DATA clean
+
 ALL: $(exe)
 	
 $(exe) : $(obj) 
