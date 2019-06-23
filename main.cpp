@@ -8,7 +8,7 @@ using namespace std;
 
 int main()
 {
-	string cmd = "mkdir -p data";
+	string cmd = "mkdir data";
     system(cmd.c_str());
 	ALLBASES Allbases;
 	PARSE Parse;
