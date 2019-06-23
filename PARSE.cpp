@@ -356,7 +356,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				break;
 			}
 		}
-		getline(is, ele2, ' ');
+		is >> ele2;
 		getline(is, ele2, ' ');
 		getline(is, mclname, '=');
 		is >> mvalue;
@@ -368,9 +368,10 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				i--;
 			}
 		}
-		getline(is, ele2, ' ');
+		is >> ele2;
 		getline(is, condition, ';');
 		DataType type = curTb->GetType(mclname);
+		while(condition[0] == ' ')condition = condition.substr(1);
 		if (type == 0)
 		{
 			int val = stoi(mvalue);
@@ -378,7 +379,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 		}
 		else if (type == 2)
 		{
-			char val = mvalue[0];
+			std::string val = mvalue;
 			curTb->Update(mclname, val, condition);
 		}
 		else if (type == 1)
@@ -386,6 +387,7 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			double val = stod(mvalue);
 			curTb->Update(mclname, val, condition);
 		}
+		cout << "1" << endl;
 		curTb->create_table_file(curDb->get_name());
 	}
 

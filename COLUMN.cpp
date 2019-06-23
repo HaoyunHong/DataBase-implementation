@@ -30,7 +30,6 @@ void COLUMN::update(int k, double v)
 	dynamic_cast<DOUBLE *>(ColumnData[k])->SetValue(v);
 }
 
-
 int COLUMN::Get_INT_Value(int k)
 {
 	return dynamic_cast<INT *>(ColumnData[k])->GetValue();

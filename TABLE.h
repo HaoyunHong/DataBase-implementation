@@ -26,7 +26,7 @@ public:
 	void Insert(std::string cname, double d);																  //在cname列添加一条数据；参数：(列名，数据)
 	void InsertNull(std::string cname, DataType type);														  //向cname列加入NULL数据
 	void Update(std::string aname, int avalue, std::string condition);										  //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
-	void Update(std::string aname, char avalue, std::string condition);										  //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
+	void Update(std::string aname, std::string avalue, std::string condition);										  //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
 	void Update(std::string aname, double avalue, std::string condition);									  //参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
 	const std::vector<int> &Select(const std::vector<std::string> &col_name, std::string condition);		  //查找符合条件语句(whereclause)的行，并将行下标储存在vector里面
 	void show_output_from_select(const std::vector<std::string> &col_name, const std::vector<int> &outorder); //将查找到的符合条件语句的行按要求输出

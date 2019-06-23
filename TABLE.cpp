@@ -65,7 +65,7 @@ void TABLE::Update(string aname, int avalue, string condition)
 	return;
 }
 
-void TABLE::Update(string aname, char avalue, string condition)
+void TABLE::Update(string aname, string avalue, string condition)
 { //主要接口
 	//（列名，目标值，条件语句）修改符合条件语句的行，使这些行的对应列的值为目标值
 	auto it = TableMap.find(aname);
@@ -75,11 +75,12 @@ void TABLE::Update(string aname, char avalue, string condition)
 		return;
 	}
 	this->UpdateRow();
+	cout << RowNum << endl;
 	for (int i = 0; i < RowNum; i++)
 	{
-
 		if (this->Judge(condition, i))
 		{
+			cout << avalue << endl;
 			it->second->update(i, avalue);
 		}
 	}
@@ -92,7 +93,7 @@ void TABLE::Update(string aname, double avalue, string condition)
 	auto it = TableMap.find(aname);
 	if (it == TableMap.end())
 	{
-		cout << "Cant not find" << aname << endl;
+		cout << "Can not find " << aname << endl;
 		return;
 	}
 	this->UpdateRow();
@@ -391,7 +392,7 @@ void TABLE::InsertNull(string cname, DataType type)
 	}
 	else if (type == _CHAR)
 	{
-		char t = ' ';
+		string t = " " ;
 		for (auto it = TableMap.begin(); it != TableMap.end(); it++)
 		{
 			if (it->first == cname)
@@ -589,8 +590,6 @@ bool TABLE::Judge(string condition, int k)
 			cout << "The LIKE sentence is invalid.Please enter again~" << endl;
 			return 0;
 		}
-	
-		
 	}
 	else
 	{
@@ -681,8 +680,8 @@ bool TABLE::Judge(string condition, int k)
 						if ((left_side[0] <= 'Z' && left_side[0] >= 'A') || (left_side[0] <= 'z' && left_side[0] >= 'a'))
 						{
 							left_type = _CHAR;
-							left_c = left_side[0];
-							right_c = right_side[0];
+							left_c = left_side;
+							right_c = right_side;
 							if (Symbol == "<")
 								Res.push_back(left_c < right_c);
 							else if (Symbol == ">")
@@ -763,7 +762,7 @@ bool TABLE::Judge(string condition, int k)
 							}
 							else if (left_type == _CHAR)
 							{
-								left_c = left_side[0];
+								left_c = left_side;
 							}
 						}
 						if (right_index == -1)
@@ -779,7 +778,7 @@ bool TABLE::Judge(string condition, int k)
 							}
 							else if (right_type == _CHAR)
 							{
-								right_c = right_side[0];
+								right_c = right_side;
 							}
 						}
 						//处理有一边本来就是常量的情况
@@ -896,9 +895,7 @@ bool TABLE::Judge(string condition, int k)
 			return Res[0];
 		}
 		return 0;
-	
 	}
-	
 }
 
 int TABLE::Count(string expression)
@@ -1429,7 +1426,7 @@ void TABLE::load_data_from_file(const std::string &in_file_name, const std::vect
 				}
 				else
 				{
-					char k;
+					std::string k;
 					content >> k;
 					TableMap[col_name[i]]->push_back(k);
 				}
@@ -1451,7 +1448,7 @@ void TABLE::load_data_from_file(const std::string &in_file_name, const std::vect
 					}
 					else if (GetType(ColumnName[i]) == _CHAR)
 					{
-						TableMap[ColumnName[i]]->push_back(char(0));
+						TableMap[ColumnName[i]]->push_back(" ");
 					}
 				}
 			}
@@ -1603,9 +1600,9 @@ void TABLE::load_table(const std::string &dbname)
 			{
 				fst >> data;
 				if (data == "NULL")
-					TableMap[col_name[i]]->push_back_null(char(0));
+					TableMap[col_name[i]]->push_back_null(" ");
 				else if (data != "")
-					TableMap[col_name[i]]->push_back(data[0]);
+					TableMap[col_name[i]]->push_back(data);
 			}
 		}
 		fst.get();

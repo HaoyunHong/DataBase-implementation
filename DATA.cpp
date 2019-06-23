@@ -199,7 +199,7 @@ bool CHAR::operator!=(CHAR &b)
 	return !(*this == b);
 }
 
-ostream &operator<<(ostream &out, CHAR &d)
+ostream &operator<<(ostream &out,  CHAR&d)
 {
 	if (!d.isNull())
 	{
