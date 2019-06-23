@@ -1,7 +1,8 @@
+[TOC]
+
 # 大作业第二阶段实验报告
 
-## **第一阶段框架代码分析与修改**
-### 1、对第一阶段代码及第二阶段需求的分析
+## 1、对第一阶段代码及第二阶段需求的分析
 第一阶段代码的复用性强，接口完备，对实现第二阶段的功能带来一定便利，但对于不同数据类型的处理仍然依赖if-else语句进行处理，可能带来较大的工作量。
 
 第二阶段大部分需求都基于SELECT关键字，因此需要对PARSE::EXEC()函数(命令处理函数)中识别SELECT类型命令的分支代码进行较精细的修改。
@@ -27,8 +28,8 @@
 * UNION：
 用于连接两个表的SELECT语句句的结果组合到一个结果集合中，可选是否删除重复数据，并且可在此基础上使用ORDER语句，可借鉴归并排序的思想，在两个表各自的记录中，使用ORDER中的方法按要求字段排序，然后依次比较两个表中排在首位的记录，直到一表全部记录输出后，输出另一表剩余所有记录
 
-### 2、对第一阶段方法的扩展
-#### 2.1、对Select方法的修改
+## 2、对第一阶段方法的扩展
+### 2.1、对Select方法的修改
 
 原有select方法包括了查找符合要求的行和输出两种功能,为了实现多表whereclause以及含UNION,JOIN,ORDER,GROUP BY的SELECT语句，将查找、输出功能分离开来。
 
@@ -52,8 +53,8 @@
 	(const std::vector<std::string> &col_name, const std::vector<int> &outorder)
 	//用于普通select语句，输出一个表中某些行的语句，附带打印表头
 
-### 3、第二阶段基础功能实现
-#### 3.1、数据导入和导出
+## 3、第二阶段基础功能实现
+### 3.1、数据导入和导出
 主要利用fstream相关函数进行导入和导出，附加字符串处理
 
 导出：
@@ -69,7 +70,6 @@
 	//函数实现位于TABLE.cpp的第1215行
 
 其实现中包含了对输出行数是否为0的判断（如为0则不需要进行输出），以及对"NULL"数据的特殊处理。
-
 
 导入：
 
@@ -96,16 +96,45 @@
 		return;
 	}//与此相似的还有几个
 
-### 4、第二阶段附加功能实现
-#### 4.1、多表whereclause语句
-##### 设计思路：
+### 3.2、COUNT函数
+在简单的SELECT语句（无GROUP和ORDER）中使用的COUNT函数由TABLE的以下成员函数实现：
+
+	int Count(std::string expression);
+
+仅返回全部（非空）记录的数量。
+在GROUP和ORDER语句中的COUNT有不同的功能和实现。
+
+###3.3、GROUP BY分组语句和ORDER BY排序语句：
+
+主要由TABLE中的以下几个成员函数实现：
+
+	void classify(const std::vector<std::string> &group_col); //实现对选中分类，在GROUP语句中使用
+	void Select_Group(const std::vector<std::string> &col_name, bool has_order); //实现GROUP
+	void Select_Order(const std::vector<std::string> &col_name, const std::string &order_col); //实现ORDER
+
+并涉及到以下成员变量：
+
+	std::vector<int> classifier; //在GROUP命令中使用，为指定的列中的数据分类，数据一样即分类相同，分类从0开始
+	std::vector<int> num_of_each_kind; //记录每个种类的行数
+	int kind; //记录分类的种数
+
+如在第一部分对第二阶段需求分析中描述一样，先按照GROUP作用的字段对所有记录进行分类，并记录每个种类的记录数量，为后续功能实现做准备。
+
+GROUP语句的实现是在分类的基础上，在每一类中取一条记录作为代表，由于分组后非GROUP作用的字段可能会数据不同，故SELECT只能作用于GROUP作用的字段或是调用COUNT函数，此时等价于对取出的代表进行输出。
+
+ORDER语句的实现也是建立在分类的基础上，对每一类取出的代表进行所需要的排序，此时等价于对所有分组排序。
+
+## 4、第二阶段附加功能实现
+### 4.1、多表whereclause语句
+* 设计思路
 
 所有的变量都是"表名.列名"的形式，且输出的每一行都是每个表中各取一行并组合之后得到的。
 所以，先将表按顺序排列并对每张表的每一行进行遍历。
 
 先对表达式进行处理，找到含某个表信息的所有语句并替换为常数，直到剩下的表达式只含一个表名table，再将剩余"表名.列名"中的表名去掉，得到与单表whereclause相同的语句，复用之前的函数进行处理。
 
-##### 核心函数：
+* 核心函数
+
 添加了下列处理表达式的函数：
 
 	std::string PARSE::constify(std::string condition,
@@ -117,7 +146,8 @@
 	//函数实现位于PARSE.cpp的第971行
 功能：将whereclause子句condition，对于表指针ptb指向的表的第line_num行，进行“常数化”处理，并返回处理后的字符串，剩下的传入值都是从whereclause中读取到的信息，只供查阅和报错使用。
 
-##### 函数功能示例：
+* 函数功能示例
+
 对于样例中的whereclause子句
 
 	life1.grade<life2.eat AND life1.girls="a";
@@ -129,28 +159,122 @@
 
 之后对life1表中后面每一行执行相同的操作
 
-##### 其他改良：
+* 其他改良
+
 为了同时支持多表和单表，在SELECT中，不再使用单个字符串对表名进行读入，而是使用vector存储，对vector的size进行判断，size=1的时候完全复用原有代码。
 修改了原Judge函数只支持左变量右常量的比较语句这一局限之处，在实现多表的同时，也使得单表的whereclause子句能够支持更多形式。
 与计算器形式的区分（在后面逻辑运算符、算术运算符部分会提及）
 
-##### 优点：
+* 优点
+
 没有对第一阶段功能的实现部分做出任何改动，在此基础上以增加函数的形式实现了第二阶段附加功能的核心部分
 
 极大程度复用了第一阶段whereclause判断的代码，没有花太多时间在修改判断函数上（仅仅是增加了两种情况的讨论）
 
 将不同表之间的行组合这一繁琐的便利过程使用"表达式常数化"来化为先前已经能够处理的基本问题
 
-##### 局限性：
+* 局限性
+
 由于规模和时间问题，目前只支持两张表之间的多表whereclause（三张表需要的遍历层数更多，复杂度为指数级）
 算法速度还有待提高，线性遍历的效率仍然不高
 
-#### 4.2、UNION关键字
-#### 4.3、sql数字函数
-#### 4.4、sql算数运算符
-#### 4.5、sql逻辑运算符
-#### 4.6、存档和读档
-##### 设计思路：
+### 4.2、UNION关键字
+
+* 设计思路
+
+UNION语句用于连接两个表的SELECT语句句的结果组合到一个结果集合中，可选是否删除重复数据，并且可在此基础上使用ORDER语句对输出进行排序。
+
+* 核心函数
+
+主要由TABLE类中的以下函数实现：
+
+	void Order_in_Union(const std::vector<std::string> &col_name, const std::string &order_col, bool has_all);
+
+上述函数实现了在两个目标表中，按照ORDER作用字段的顺序分别进行排序，在函数中有个参数是bool类型，用来判断是否是UNION ALL。如果存在ALL，则需要输出全部记录，则需要对两表内全部记录排序；否则，可以调用GROUP语句中的classify函数，并只对每一类的代表排序。
+
+分别排序完成后，借鉴**归并排序**的思想，依次比较两表内首位记录，输出后移至下一位次，直至某一表为空，按顺序输出另一张表的剩余所有记录。
+
+* 函数功能示例
+
+对于给出测例"UNION.sql"中的指令
+
+	CREATE DATABASE OOP_is_so_difficult;
+	USE OOP_is_so_difficult;
+	CREATE TABLE class_liu(score INT, gpa DOUBLE, name1 CHAR, PRIMARY KEY(name1));
+	CREATE TABLE class_huang(score INT, gpa DOUBLE, name2 CHAR, PRIMARY KEY(name2));
+	INSERT INTO class_liu(score, gpa, name1) VALUES (100, 4.0, "a");
+	INSERT INTO class_liu(score, gpa, name1) VALUES (95, 4.0, "b");
+	INSERT INTO class_liu(score, gpa, name1) VALUES (89, 3.6, "c");
+	INSERT INTO class_liu(score, gpa, name1) VALUES (84, 3.3, "d");
+	INSERT INTO class_huang(score, gpa, name2) VALUES (100, 4.0, "A");
+	INSERT INTO class_huang(score, gpa, name2) VALUES (90, 4.0, "B");
+	INSERT INTO class_huang(score, gpa, name2) VALUES (88, 3.6, "C");
+	INSERT INTO class_huang(score, gpa, name2) VALUES (83, 3.3, "D");
+	SELECT gpa, name1 from class_liu UNION gpa, name2 from class_huang ORDER BY gpa;
+	SELECT gpa, name2 from class_huang UNION gpa, name1 from class_liu ORDER BY gpa;
+	SELECT gpa, name1 from class_liu UNION ALL gpa, name2 from class_huang ORDER BY gpa;
+	SELECT gpa, name2 from class_huang UNION ALL gpa, name1 from class_liu ORDER BY gpa;
+	SELECT score, name1 from class_liu UNION score, name2 from class_huang ORDER BY score;
+	SELECT score, name2 from class_huang UNION score, name1 from class_liu ORDER BY score;
+
+运行程序后正确输出：
+
+	gpa	name1	
+	3.3	D	
+	3.6	C	
+	4	A	
+	gpa	name2	
+	3.3	d	
+	3.6	c	
+	4	a	
+	gpa	name1	
+	3.3	D	
+	3.3	d	
+	3.6	C	
+	3.6	c	
+	4	A	
+	4	B	
+	4	a	
+	4	b	
+	gpa	name2	
+	3.3	d	
+	3.3	D	
+	3.6	c	
+	3.6	C	
+	4	a	
+	4	b	
+	4	A	
+	4	B	
+	score	name1	
+	83	D	
+	84	d	
+	88	C	
+	89	c	
+	90	B	
+	95	b	
+	100	A	
+	score	name2	
+	83	D	
+	84	d	
+	88	C	
+	89	c	
+	90	B	
+	95	b	
+	100	a	
+
+* 优点
+
+借鉴归并排序算法进行算法实现，有效降低时间复杂度；复用GROUP以及ORDER语句中使用过的函数，减少代码量；对于非法输入进行报错。
+
+* 缺点
+
+对于可以接受的语句的形式比较单一，未能进行有效扩展或与第一阶段其他函数联系。
+
+### 4.3、sql数字函数
+### 4.4、sql算数运算符
+### 4.5、sql逻辑运算符
+### 4.6、存档和读档
+* 设计思路
 此功能难度主要在于读档，要从零开始创建与原来完全相同的数据库和表，除了要在文件中储存数据之外，还需要储存表名、数据库名、列名、主键等关键信息。这些都是基础功能中写入文件这一功能的更高要求。
 
 因此，我们先利用
@@ -177,7 +301,7 @@
 
 读档时，利用相关函数按照次序读档并建立数据库、建立表、添加列、加入数据。
 
-##### 核心函数：
+* 核心函数
 创建存档文件的函数：
 
 	void create_table_file(const std::string &dbname); //表(TABLE)类函数，存档
@@ -197,41 +321,41 @@
 
 但这一结构也同时支持对低层函数的单独调用，我们也额外增加了只对某个表/数据库进行存档的命令（SAVE命令）
 
-##### 新添加的命令：
+* 新添加的命令
 
-	RELOAD; //程序刚开始运行时，直接使用LOAD会从data文件夹中搜索上次的存档，并进行读档
-	SAVE TABLE tbname;//将名为tbname的表进行存档，即对这个表对应的.txt文件进行重写或者存档
-	SAVE DATABASE dbname;//将名为dbname的数据库进行存档，即对这个数据库对应的.txt文件以及其下辖所有表的.txt文件进行重写或者存档
-	SAVE ALL;//对所有内容进行存档
-	这些命令用于手动存读档，在每个会对存储数据进行操作的分支后，都有自动存档语句，无需使用命令就可自动存档
-	例如：
+```
+RELOAD; //程序刚开始运行时，直接使用LOAD会从data文件夹中搜索上次的存档，并进行读档
+SAVE TABLE tbname;//将名为tbname的表进行存档，即对这个表对应的.txt文件进行重写或者存档
+SAVE DATABASE dbname;//将名为dbname的数据库进行存档，即对这个数据库对应的.txt文件以及其下辖所有表的.txt文件进行重写或者存档
+SAVE ALL;//对所有内容进行存档
+```
 
-		else if (ele1 == "UPDATE")
+这些命令用于手动存读档，在每个会对存储数据进行操作的分支后，都有自动存档语句，无需使用命令就可自动存档
+例如：
+
+	else if (ele1 == "UPDATE")
+	{
+		......//操作语句，省略
+		curTb->create_table_file(curDb->get_name());
+	}//UPDATE操作只对一个表进行了修改，所以重新覆盖该表对应的数据文件即可
+	//DELETE 和 INSERT 操作同理，不再列举
+	if (ele1 == "CREATE")
+	{
+		......//操作语句，省略
+		if(ele2 == "TABLE")//指代"CREATE TABLE......"命令
 		{
-			......//操作语句，省略
-			curTb->create_table_file(curDb->get_name());
-		}//UPDATE操作只对一个表进行了修改，所以重新覆盖该表对应的数据文件即可
-
-		//DELETE 和 INSERT 操作同理，不再列举
-
-
-		if (ele1 == "CREATE")
-		{
-			......//操作语句，省略
-			if(ele2 == "TABLE")//指代"CREATE TABLE......"命令
-			{
-				......
-				curDb->create_database_file();//需要修改当前数据库的文件
-			}
-			else if(ele2 == "DATABASE")//指代"CREATE DATABASE......"命令
-			{
-				......
-				Allbases.create_allbases_file();//需要修改总文件index.txt
-			}
+			......
+			curDb->create_database_file();//需要修改当前数据库的文件
 		}
-		//DROP 操作同理，不再列举
+		else if(ele2 == "DATABASE")//指代"CREATE DATABASE......"命令
+		{
+			......
+			Allbases.create_allbases_file();//需要修改总文件index.txt
+		}
+	}	//DROP 操作同理，不再列举
 
-##### 实现方式：
+* 实现方式
+
 核心为fstream类，通过访问文件的方式写入/获得数据
 
 存档函数（以第一个函数为例）：
@@ -277,9 +401,10 @@
 
 主要实现方式依赖于fstream类的相关函数
 
-##### 存档文件示例和重新读档运行界面说明
+* 存档文件示例和重新读档运行界面说明
 以以下测试代码为例（数据库附加功能测试/存档与读档1.sql）：
 
+```
 	CREATE DATABASE qaz;
 	CREATE DATABASE edc;
 	CREATE DATABASE ijn;
@@ -301,6 +426,7 @@
 	//总计三个数据库：qaz,edc,ijn
 	qaz、edc数据库下没有表，ijn数据库下有nba,cba,wnba三张表
 	表cba中有4条记录，nba中有2条记录，wnba中有1条记录
+```
 
 运行结束后，data文件夹中存在以下文件：
 	
@@ -380,14 +506,14 @@ ijn.cba.txt内容如下（//之后的部分是标注说明，本来不存在于�
 
 读档后，数据库程序回到了关闭之前的状态，并可以进行与之前完全相同的操作
 
-##### 优势：
+* 优势：
 利用了之前的文件导入、导出函数进行改写；
 使用文件名标记对应储存的表，并使用分层结构，用index.txt为总目录，分层查找，减小了遗漏数据的可能性；
 按列存储，并在表文件中记录总行数，方便创建一列后马上输入数据，防止了多次更新"行数"的重复操作
 将存档函数设置为每一个类的成员函数而不是作为最高层级的成员函数，使得分开调用、局部存档变为可能，比起每一次操作都覆盖所有文件的最初想法来说，复杂度降低了很多，并且可以根据操作层面的不同对文件做最小程度的修改；
 用户退出程序后，可以自行选择删除存档或是保留存档，增加了项目的灵活度；
 
-##### 缺点：
+* 缺点：
 其实说是缺点，更多的是因为时间不允许而没有能够做到更好的遗憾吧
 
 首先，原本的设想是利用fstream类的读、写双接口将修改文件的复杂度降低至线性复杂度以下，但因为时间原因没有能够实现，改为使用分层做法尽可能优化；
@@ -396,7 +522,7 @@ ijn.cba.txt内容如下（//之后的部分是标注说明，本来不存在于�
 
 最后，对于文件读取的效率应该还有优化空间。
 
-#### 4.7、向文件导入数据时支持whereclause
+### 4.7、向文件导入数据时支持whereclause
 
 * 我们支持在导出语句的后端增加whereclause语句。
 * 同时支持对任意指定列的输出,附加功能的实现得益于第一部分对原代码中select函数的修改。
@@ -435,8 +561,7 @@ ijn.cba.txt内容如下（//之后的部分是标注说明，本来不存在于�
 	4	
 	5	
 
-
-#### 4.8、从文件导入信息的默认值填充处理
+### 4.8、从文件导入信息的默认值填充处理
 我们增加了对于导入信息不完整时的默认值填充处理，对没有输入的列默认用0（int类型）/0.0（double类型）/char(0)（char类型）填充：
 
 	if (col_name.size() != ColumnName.size())//如果命令输入的列数少于总列数
@@ -493,10 +618,3 @@ ijn.cba.txt内容如下（//之后的部分是标注说明，本来不存在于�
 	2018011343	a	0	
 	2018011344	b	0	
 	2018011345	c	0	
-
-
-
-
-
-
-

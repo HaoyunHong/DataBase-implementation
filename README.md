@@ -157,7 +157,18 @@
     void Update(std::string aname, char avalue, std::string condition);//参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
     void Update(std::string aname, double avalue, std::string condition);//参数（列名，目标值，条件语句）；功能：修改符合条件语句的行，使这些行的对应列的值为目标值；
     
-    void Select(std::string name, std::string condition);//查找符合条件语句(whereclause)的行，并输出列name的信息，若name为"*"，则输出所有列的信息
+    //void Select(std::string name, std::string condition);//查找符合条件语句(whereclause)的行，并输出列name的信息，若name为"*"，则输出所有列的信息//
+    上面为第一阶段函数，第二阶段将其两个功能分离，并分多种情况实现输出功能
+
+    下面是第二阶段函数：
+    //
+    const std::vector<int> &Select(const std::vector<std::string> &col_name, std::string condition);		  //查找符合条件语句(whereclause)的行，并将行下标储存在vector里面
+
+	void show_output_from_select(const std::vector<std::string> &col_name, const std::vector<int> &outorder); //将查找到的符合条件语句的行按要求输出
+
+    void show_output_from_col(const std::string &colname, const std::vector<int> &outorder, int k);			  //输出colname列，outorder这个vector中下标为k的项对应的行对应单元格内的数据
+    //
+    
     
     void Delete(std::string condition);//删除符合条件语句的行
     
@@ -168,6 +179,24 @@
     void UpdateRow();//更新行数
 
     COLUMN* GetColumn(std::string name);//获得名字为name的列的列指针
+
+    为了实现第二阶段功能添加的下列成员函数：
+
+    void Select_Group(const std::vector<std::string> &col_name, bool has_order);//对group之后的结果进行输出
+
+	void Select_Order(const std::vector<std::string> &col_name, const std::string &order_col);//对order之后的结果进行输出
+
+	void Order_in_Union(const std::vector<std::string> &col_name, const std::string &order_col, bool has_all);//对union（或union all）的结果集进行输出
+
+    void classify(const std::vector<std::string> &group_col); //实现对选中分类，在GROUP语句中使用
+
+    void write_into_outfile(const std::string &out_file_name, const std::vector<int> &outorder, const std::vector<std::string> &col_name); //输出到目标文件
+
+	void load_data_from_file(const std::string &in_file_name, const std::vector<std::string> &col_name);  //从目标文件读取数据
+
+	void bubble_sort(std::vector<int> &order);		   //按照关键列对行下标的vector进行冒泡排序
+	void create_table_file(const std::string &dbname); //存档
+	void load_table(const std::string &dbname);		   //读档
 
 ```
 + DATABASE类
@@ -180,6 +209,10 @@
     
     void showtables();//直接列出现有表
 
+    为了实现第二阶段功能添加的成员函数：
+    void create_database_file();//存档
+    void load_database();//读档
+
 ```
 +  ALLBASES类 
 ```
@@ -190,16 +223,54 @@
     void del(std::string name);//Drop名为name的数据库
 
     void show();//按字典序列出当前数据库
+
+    为了实现第二阶段功能添加的成员函数与接口：
+    void create_allbases_file();       //存档
+    const std::vector<std::string>& Get_DBName();//读取所含数据库名字（添加的接口，用于存档）
+    void load_all_databases();         //读档
 ```
 
-## 4. 开发者指导
+## 4. PARSE类主要函数
+```
+void EXEC(ALLBASES &Allbases, std::string input);   //输入命令处理
+
+void Transform(std::string &src, std::string &dst); //关键字转换为大写
+
+DataType attype(std::string type);					//获得数据类型
+
+std::string whole_expression_standardize(std::string whole_expression);//对缺乏括号的算数符号进行处理
+
+int P(std::string arithmetic_operator);//制定算术运算符优先级
+
+std::string arithmetic_calculator(std::string& whole_expression);//算数计算器
+
+int PL(std::string logic_operator);//制定逻辑运算符优先级
+
+std::string logic_calculator(std::string& whole_expression);//逻辑计算器
+
+std::string constify(std::string condition, const std::vector<std::string> &tbname, TABLE *ptb, int line_num, const std::vector<int>outorder, const std::vector<std::string> &col_name, const std::vector<std::string> &col_tb_name);//将一个列内的相关数据代换成常数
+```
+
+## 5. 第一阶段开发者指导
 建议在主函数基于Allbases调用相应命令语句的执行函数，新增功能以新增成员函数的方式开发。
 
+## 6. 第二阶段阅读和检验指导
+对框架的主要修改：
+* Table类的Select函数，使其功能分离（使得Select函数的查找功能在之后的几乎每一个功能中都得到了很好的复用，输出功能经过简单修改也能适用于其他需求）
+* DATA类的子类CHAR，将变量形式由char修改为std::string（方便了进一步实现like子句，同时拓展了数据库支持数据类型的范围）
+* Judge函数的表达式处理部分，增加了对判断符号两边都是变量、都不是变量的处理（拓展了whereclause的使用范围，提高了适用度）
 
+主要实现的拓展功能
+第二阶段要求中列举的：
+* 多表whereclause
+* UNION和UNION ALL关键字
+* sql数字函数和字符串函数
+* sql算术运算函数和逻辑运算函数
+* LIKE子句
+* 存档、读档并支持退出重新进入后访问原来数据，同时每次操作更新一次数据文件
 
-
-
-
-
-
-
+组内讨论后合理实现的：
+* 将数据导入文件时支持使用whereclause来选择要导出的行
+* 将数据写入文件时支持对不存在输入的列进行默认值填充
+* 将逻辑运算符XOR和NOT用于whereclause子句并适配所有SELECT语句
+* SELECT输出支持任意数量、顺序的列（第一阶段只支持一列或全部列），并将这一功能用于所有SELECT相关语句
