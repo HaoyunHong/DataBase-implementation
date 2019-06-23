@@ -519,6 +519,9 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 				if (input_upper.find("+") != -1 || input_upper.find("-") != -1 || input_upper.find("*") != -1 || input_upper.find("/") != -1 || input_upper.find("%") != -1 || input_upper.find(" DIV ") != -1 || input_upper.find(" MOD ") != -1)
 				{
 					cout << whole_expression << endl;
+					string num_result = arithmetic_calculator(whole_expression);
+					cout << setprecision(3) << num_result << endl; //保留三位有效数字
+					break;
 				}
 				string num_result = logic_calculator(whole_expression);
 				cout << setprecision(3) << num_result << endl; //保留三位有效数字
