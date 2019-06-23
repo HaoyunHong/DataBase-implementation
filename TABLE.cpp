@@ -75,12 +75,10 @@ void TABLE::Update(string aname, string avalue, string condition)
 		return;
 	}
 	this->UpdateRow();
-	cout << RowNum << endl;
 	for (int i = 0; i < RowNum; i++)
 	{
 		if (this->Judge(condition, i))
 		{
-			cout << avalue << endl;
 			it->second->update(i, avalue);
 		}
 	}

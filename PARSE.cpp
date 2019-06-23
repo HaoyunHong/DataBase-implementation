@@ -387,7 +387,6 @@ void PARSE::EXEC(ALLBASES &Allbases, string input) //输入命令处理
 			double val = stod(mvalue);
 			curTb->Update(mclname, val, condition);
 		}
-		cout << "1" << endl;
 		curTb->create_table_file(curDb->get_name());
 	}
 
