@@ -20,7 +20,6 @@ void split(const string &s, vector<string> &sv, const char flag)
 	return;
 }
 
-
 DataType TABLE::GetType(std::string name)
 {
 	for (int i = 0; i < ColumnName.size(); i++)
@@ -183,7 +182,7 @@ void TABLE::show_output_from_col(const std::string &colname, const std::vector<i
 	if (TableMap[colname]->Get_IsNull(k))
 	{
 		cout << "NULL"
-			<< "\t";
+			 << "\t";
 	} //为空
 	if (GetType(colname) == _INT)
 	{
@@ -390,7 +389,7 @@ void TABLE::InsertNull(string cname, DataType type)
 	}
 	else if (type == _CHAR)
 	{
-		string t = " " ;
+		string t = " ";
 		for (auto it = TableMap.begin(); it != TableMap.end(); it++)
 		{
 			if (it->first == cname)
@@ -465,22 +464,22 @@ void TABLE::showcolumns()
 		if (pc->isNotNULL())
 		{
 			std::cout << "NO"
-				<< "\t";
+					  << "\t";
 		}
 		else
 		{
 			std::cout << "YES"
-				<< "\t";
+					  << "\t";
 		}
 		if (ColumnName[i] == KeyColumn)
 		{
 			std::cout << "PRI"
-				<< "\t";
+					  << "\t";
 		}
 		if (pc->hasDefault() == false)
 		{
 			std::cout << "NULL"
-				<< "\t";
+					  << "\t";
 		}
 		else
 		{
@@ -499,7 +498,7 @@ bool TABLE::Judge(string condition, int k)
 		return 1;
 	string condition_upper;
 	transform(condition.begin(), condition.end(), back_inserter(condition_upper), ::toupper);
-/*
+	/*
 	'%a'     //以a结尾的数据
 	'a%'     //以a开头的数据
 	'%a%'    //含有a的数据
@@ -507,22 +506,22 @@ bool TABLE::Judge(string condition, int k)
 	'_a'     //两位且结尾字母是a的
 	'a_'     //两位且开头字母是a的
 */
-	if (condition_upper.find(" LIKE ")!=-1)
+	if (condition_upper.find(" LIKE ") != -1)
 	{
 		stringstream ilike(condition);
 		string column_name;
 		ilike >> column_name;
 		//cout << "column_name: " << column_name << endl;
 		string like_expression;
-		ilike>> like_expression;
-		ilike >> like_expression;//把LIKE关键词给跳过了
+		ilike >> like_expression;
+		ilike >> like_expression; //把LIKE关键词给跳过了
 		//cout << "like_expression: " << like_expression << endl;
 		like_expression = like_expression.substr(1, like_expression.length() - 2);
 		//cout << "like_expression: " << like_expression << endl;
 		COLUMN *p = this->GetColumn(column_name);
-		string key_string;//储存模糊匹配的关键词
+		string key_string; //储存模糊匹配的关键词
 		string str = p->Get_CHAR_Data(k)->GetValue();
-		if (like_expression[like_expression.length() - 1] == '%'&&like_expression[0] == '%')
+		if (like_expression[like_expression.length() - 1] == '%' && like_expression[0] == '%')
 		{
 			key_string = like_expression.substr(1, like_expression.length() - 2);
 			if (str.find(key_string) > 0 && str.find(key_string) < str.length() - key_string.length())
@@ -538,13 +537,12 @@ bool TABLE::Judge(string condition, int k)
 			{
 				return 0;
 			}
-			else if (str.substr(str.length() - key_string.length(), key_string.length()) ==key_string)
+			else if (str.substr(str.length() - key_string.length(), key_string.length()) == key_string)
 			{
 				return 1;
 			}
 			else
 				return 0;
-			
 		}
 		else if (like_expression[like_expression.length() - 1] == '%')
 		{
@@ -555,11 +553,11 @@ bool TABLE::Judge(string condition, int k)
 			}
 			return 0;
 		}
-		
-		else if (like_expression.length()==3 && like_expression[0] == '_'&&like_expression[2] == '_')
+
+		else if (like_expression.length() == 3 && like_expression[0] == '_' && like_expression[2] == '_')
 		{
-			key_string = like_expression.substr(1, like_expression.length()-1);
-			if (str.length() == 3 && str.substr(1,1)== key_string)
+			key_string = like_expression.substr(1, like_expression.length() - 1);
+			if (str.length() == 3 && str.substr(1, 1) == key_string)
 			{
 				return 1;
 			}
@@ -568,7 +566,7 @@ bool TABLE::Judge(string condition, int k)
 		else if (like_expression.length() == 2 && like_expression[0] == '_')
 		{
 			key_string = like_expression.substr(1);
-			if (str.length() == 2 && str.substr(1)==key_string)
+			if (str.length() == 2 && str.substr(1) == key_string)
 			{
 				return 1;
 			}
@@ -576,8 +574,8 @@ bool TABLE::Judge(string condition, int k)
 		}
 		else if (like_expression.length() == 2 && like_expression[1] == '_')
 		{
-			key_string = like_expression.substr(0,1);
-			if (str.length()==2 && str.substr(0,1) == key_string)
+			key_string = like_expression.substr(0, 1);
+			if (str.length() == 2 && str.substr(0, 1) == key_string)
 			{
 				return 1;
 			}
@@ -591,22 +589,21 @@ bool TABLE::Judge(string condition, int k)
 	}
 	else
 	{
-		//现分割逐句判断在运算逻辑运算式
+		//先分割逐句判断再运算逻辑运算式
 		vector<string> Con; //存储> < = 语句，还有"NOT"
 		vector<string> Sym; //存储逻辑运算符
 		vector<bool> Res;   //存储每一句的bool值
-		split(condition, Con);
+		split(condition, Con, ' ');
 		bool has_not = false;
 		for (int i = 0; i < Con.size(); i++)
 		{
 			string ini = Con[i], upp;
 			upp = "";
 			transform(ini.begin(), ini.end(), back_inserter(upp), ::toupper);
+
 			if (upp == "NOT")
 			{
 				has_not = true;
-				Con.erase(Con.begin() + i);
-				i--;
 				continue;
 			}
 			//遍历Con，若是< > = 语句则判断bool值，否则为逻辑运算 符，加入到Sym并删除
@@ -624,8 +621,6 @@ bool TABLE::Judge(string condition, int k)
 				{
 					Sym.push_back("XOR");
 				}
-				Con.erase(Con.begin() + i);
-				i--;
 				continue;
 			}
 			//逐个遍历每一句中字符，若找到 > < = 则分割为两段，左为列名，将右边转化为对应列数据类型进行比较得到bool值
@@ -852,48 +847,49 @@ bool TABLE::Judge(string condition, int k)
 				Res[Res.size() - 1] = !Res[Res.size() - 1];
 				has_not = false;
 			}
-			//至此Res和Sym中分别按顺序存放bool值和逻辑运算符AND OR XOR
-	//由于AND优先级大于OR 先计算所有AND
+		}
+		    
 
-	/* for(int i = 0; i < Res.size(); i++)cout << "Res[" << i << "] = " << Res[i] << endl;
-	for(int i = 0; i < Sym.size(); i++)cout << "Sym[" << i << "] = " << Sym[i] << endl;*/
+		/* for (int i = 0; i < Res.size(); i++)
+			cout << "Res[" << i << "] = " << Res[i] << endl;
+		for (int i = 0; i < Sym.size(); i++)
+			cout << "Sym[" << i << "] = " << Sym[i] << endl;*/
 
+		for (int i = 0; i < Sym.size(); i++)
+		{
+			if (Sym[i] == "AND")
+			{
+				Res[i] = Res[i] && Res[i + 1]; //Res应该是比Sym长一位的，所以大概是安全的吧，再看看
+				Res.erase(Res.begin() + i + 1); //两项合为一项
+				Sym.erase(Sym.begin() + i);		//删掉AND
+				i--;							//因为做过删除操作了，i要-1，再看看
+			}
+		}
+		//至此Sym中应该存放的都是OR和XOR，两者并列`
+		while (Sym.size() != 0)
+		{
 			for (int i = 0; i < Sym.size(); i++)
 			{
-				if (Sym[i] == "AND")
+				if (Sym[i] == "OR")
 				{
-					Res[i] = Res[i] && Res[i + 1];  //Res应该是比Sym长一位的，所以大概是安全的吧，再看看
-					Res.erase(Res.begin() + i + 1); //两项合为一项
-					Sym.erase(Sym.begin() + i);		//删掉AND
-					i--;							//因为做过删除操作了，i要-1，再看看
+					Res[i] = Res[i] || Res[i + 1];
+					Res.erase(Res.begin() + i + 1);
+					Sym.erase(Sym.begin() + i);
+					i--;
 				}
-			}
-			//至此Sym中应该存放的都是OR和XOR，两者并列`
-			while (Sym.size() != 0)
-			{
-				for (int i = 0; i < Sym.size(); i++)
+				else if (Sym[i] == "XOR")
 				{
-					if (Sym[i] == "OR")
-					{
-						Res[i] = Res[i] || Res[i + 1];
-						Res.erase(Res.begin() + i + 1);
-						Sym.erase(Sym.begin() + i);
-						i--;
-					}
-					else if (Sym[i] == "XOR")
-					{
-						Res[i] = ((Res[i] && !Res[i + 1]) || (!Res[i] && Res[i + 1]));
-						Res.erase(Res.begin() + i + 1);
-						Sym.erase(Sym.begin() + i);
-						i--;
-					} //改！
-					break;
-				}
+					Res[i] = ((Res[i] && !Res[i + 1]) || (!Res[i] && Res[i + 1]));
+					Res.erase(Res.begin() + i + 1);
+					Sym.erase(Sym.begin() + i);
+					i--;
+				} //改！
+				break;
 			}
-			return Res[0];
 		}
-		return 0;
-	}
+		return Res[0];
+	}		
+	return 0;
 }
 
 int TABLE::Count(string expression)
