@@ -271,10 +271,373 @@ UNION语句用于连接两个表的SELECT语句句的结果组合到一个结果
 对于可以接受的语句的形式比较单一，未能进行有效扩展或与第一阶段其他函数联系。
 
 ### 4.3、sql数字函数
-### 4.4、sql算数运算符
-### 4.5、sql逻辑运算符
-### 4.6、存档和读档
+
+* 设计思路：
+
+sql数字函数的本质是用```select```关键词后加数字函数，对数据进行处理，在其中，我们实现了取绝对值```ABS```函数、取反余弦值```ACOS```函数、取反正弦值```ASIN```函数、取反正切值```ATAN```函数，还有向上取整```CEIL```函数、```CEILING```函数，一共6个函数。
+
+* 功能示例：
+
+取绝对值函数的输入：
+
+	SELECT ABS(-1);
+输出：
+
+	1
+取反余弦值的输入：
+
+	SELECT ACOS(0.25);
+输出：
+
+	75.5225 degree
+取反正弦值的输入：
+
+	SELECT ASIN(0.25);
+输出：
+
+	14.4775 degree
+取反正切值的输入：
+
+	SELECT ATAN(2.5);
+输出：
+
+	68.1986 degree
+向上取整的输入：
+
+	SELECT CEIL(1.5);
+	SELECT CEIL(1.0);
+	SELECT CEILING(1.5);
+	SELECT CEILING(1.00); 
+输出：
+
+	2
+	1
+	2
+	1
+
+* 优点
+
+直接在```Parse.EXEC```函数体内```else if (ele1 == "SELECT")```的分支内加分支进行扩展，无需改动其它代码。
+
+通过在判断时，使用大写字母化后的表达式进行比对的方法，实现对关键词和运算符的大小写不敏感。
+
+实现了6个函数，大于5个，要想再加数字函数可以直接继续在分支里扩展。
+
+* 局限性与展望
+
+时间比较紧迫，没有与```whereclauses```有机结合，最理想的方式是像excel那样，对数值列中的数据进行数字函数操作，比如对数据表中的某个或某列数值数据取绝对值等，使数据库更加灵活。
+
+### 4.4、sql字符串函数
 * 设计思路
+
+sql字符串函数是用select关键词加字符串函数，输出处理后的字符串，在其中，我们实现了获取字符串长度的```CHAR_LENGTH```函数、```CHARACTER_LENGTH```函数，按顺序连接字符串的```CONCAT```函数（默认连接符为" "，即空格）、按顺序连接字符串并给定连接符的```CONCAT_WS```函数一共4个函数。
+
+* 功能示例
+
+获取字符串长度的输入：
+
+	SELECT CHAR_LENGTH("RUNOOB") AS LengthOfString;
+	SELECT CHAR_LENGTH("RUNOOB")AS LengthOfString;
+	SELECT CHARACTER_LENGTH("RUNOOB") AS LengthOfString;
+	SELECT CHARACTER_LENGTH("RUNOOB")AS LengthOfString;
+输出：
+
+	The length of the entered string "RUNOOB" is 6.
+	The length of the entered string "RUNOOB" is 6.
+	The length of the entered string "RUNOOB" is 6.
+	The length of the entered string "RUNOOB" is 6.
+按顺序连接字符串的输入：
+
+	SELECT CONCAT("SQL ", "Runoob ", "Gooogle ", "Facebook") AS ConcatenatedString;
+	SELECT CONCAT("SQL ", "Runoob ", "Gooogle ", "Facebook")AS ConcatenatedString;
+
+输出：
+
+	The merged string is "SQL Runoob Gooogle Facebook".
+	The merged string is "SQL Runoob Gooogle Facebook".	
+按顺序连接字符串并给定间隔符（比如```-```)的输入：
+
+	SELECT CONCAT_WS("-", "SQL", "Tutorial", "is", "fun!") AS ConcatenatedString;
+	SELECT CONCAT_WS("-", "SQL", "Tutorial", "is", "fun!")AS ConcatenatedString;
+输出：
+
+	The merged string with entered seperation is "SQL-Tutorial-is-fun!".
+	The merged string with entered seperation is "SQL-Tutorial-is-fun!".
+
+* 优点
+
+直接在```Parse.EXEC```函数体内```else if (ele1 == "SELECT")```的分支内加分支进行扩展，无需改动其它代码。
+
+通过在判断时，使用大写字母化后的表达式进行比对的方法，实现对关键词和运算符的大小写不敏感。
+
+因为```AS```关键词与函数参数表后的右括号之间有没有空格在mysql中都是合法的，我们对这个corner case作了处理，使程序更稳健。
+
+* 局限性与展望
+
+其实字符串函数可以不仅仅处理独立的字符串，也可以把一个表中的某些“单元格”（类比excel表）的字符串元素进行操作（比如把某行的某几列字符串数据连接起来）然后再赋值给某一“单元格”。
+
+### 4.5、sql逻辑运算
+
+* 设计思路
+
+sql逻辑运算可以说就是用```select```关键字的不带括号的逻辑计算器，通过为各运算符设定优先级，再运用数据栈和运算符栈，来得到最终的```bool```值答案。
+
+因为此处的特殊符号```!```是前后有无空格都是合法的，而我们知道取非是唯一的单目逻辑运算符，```!```是从属于它后面的数据的，```NOT```也是，所以通过函数```string PARSE::whole_expression_standardize```进行逻辑表达式的标准化，将出现```!```或```NOT```的表达式转化为符号前有空格而后面直接连数据的新表达式，以便后续通过字符串流进行分割。若分割的子段中有```!```或```NOT```，直接取逻辑非加入数据栈中。
+
+* 功能示例
+
+输入：
+
+	Select 2 aNd 0;
+	seLEct 2 oR 1;
+	SElect noT 1;
+	sEleCt 1 Xor 1;
+	sEleCt 0 Xor 1 AnD 9 and !10 Or 3;
+输出：
+
+	false
+	true
+	false
+	true
+	true
+
+* 优点
+
+直接在```Parse.EXEC```函数体内```else if (ele1 == "SELECT")```的分支内加分支进行扩展，无需改动其它代码。
+
+通过在判断时，使用大写字母化后的表达式进行比对的方法，实现对关键词和运算符的大小写不敏感。
+
+对特殊符号```!```前后有无空格的corner cases进行处理，使程序更加稳健。
+
+可以支持任何仅有与、或、非、异或的逻辑表达式，且运算符数量与组合形式不限。
+
+* 局限性与展望
+
+逻辑运算可以不仅仅处理独立的逻辑表达式，它可以与```whereclauses```的逻辑运算兼并，去计算筛选输出的条件，或者可以把一个表中的某些“单元格”（类比excel表）的字符串元素进行操作（比如连接起来）然后再赋值给某一“单元格”。
+
+### 4.6、sql算术运算
+
+* 设计思路
+
+sql算术运算本质使```SELECT```关键字的无括号的算术计算器，运用数据栈和运算符栈以及给各运算符设定优先级，来得到最终的数值答案，最终答案小数点后保留6位。
+
+* 功能示例
+
+输入加法表达式：
+
+	SeLeCt 2+1;
+输出：
+
+	2 + 1
+	3.000000
+输入减法表达式：
+
+	SELect 2-1;
+输出：
+
+	2 - 1
+	1.000000
+输入除法表达式：
+
+	SeLect 3/2;
+	select 3 DIV 2;
+输出：
+
+	3 / 2
+	1.500000
+	3 DIV 2
+	1.500000
+输入取模表达式：
+
+	select 100%3;
+	selecT 100 MOD 3;
+输出：
+
+	100 % 3
+	1.000000
+	100 MOD 3
+	1.000000	
+输入数学符号前后没有空格的混合运算：
+
+	SELECT 2 MOd 3+4/2-1+8/6;
+输出：
+
+	2 MOD 3 + 4 / 2 - 1 + 8 / 6
+	4.333333
+输入数学符号前后没有空格或有空格的混合运算：
+
+	SelECT 1/3-5 DIV 3+8 Mod 7-3/5;
+	SelECT 1 / 3 -5 DIV   3 +   8   Mod 7  - 3 /5;
+输出：
+
+	1 / 3 - 5 DIV 3 + 8 MOD 7 - 3 / 5
+	-0.933333
+	1  /  3  - 5 DIV   3  +    8   MOD 7   -  3  / 5
+	-0.933333
+
+* 优点
+
+直接在```Parse.EXEC```函数体内```else if (ele1 == "SELECT")```的分支内加分支进行扩展，无需改动其它代码。
+
+通过在判断时，使用大写字母化后的表达式进行比对的方法，实现对关键词和运算符的大小写不敏感。
+
+支持```int```和```double```数据。
+
+因为数学符号在mysql里前后是不一定有空格的，而我们使用的方法是自动以空格作为间隔的字符串流，所以程序会在数学运算符前后加入空格，对输入的corner cases作处理，以保证运算结果的准确性与程序稳健性。
+
+可以支持任何仅有加、减、乘、除、取模的算术表达式，无论多少个算术运算符或者任何组合都可以。
+
+* 局限性与展望
+
+其实算术运算可以不仅仅处理独立的字符串，可以用到```whereclases```里，进行表达式的值与数据表中数据的比较，或者可以把一个表中的某些“单元格”（类比excel表）的数值元素进行操作（比如求某一列的和）然后再赋值给某一“单元格”。
+
+### 4.7、LIKE子句模糊匹配
+* 设计思路
+
+通过对数据表中字符串子串的查找，来进行类似正则的模糊匹配，
+
+* 功能展示
+
+输入，新建数据库、数据表，并将数据插入:
+
+    CREATE DATABASE CAFE;
+    USE CAFE;
+    CREATE TABLE menu(price INT, cost INT, kind CHAR, PRIMARY KEY(kind));
+    INSERT INTO menu(price, cost, kind) VALUES (15, 5, "milk_coffee");
+    INSERT INTO menu(price, cost, kind) VALUES (20, 8, "milk_cake");
+    INSERT INTO menu(price, cost, kind) VALUES (30, 12, "abc");
+    INSERT INTO menu(price, cost, kind) VALUES (15, 5, "red_rose_cake");
+    INSERT INTO menu(price, cost, kind) VALUES (22, 10, "pink_rose_cake");
+    INSERT INTO menu(price, cost, kind) VALUES (20, 8, "ki");
+显示模糊匹配结果：
+输入：
+
+    SELECT * from menu WHERE kind LIKE '%cake';
+输出：
+
+    price   cost    kind
+    20      8       milk_cake
+    22      10      pink_rose_cake
+    15      5       red_rose_cake
+输入：
+
+    SELECT price from menu WHERE kind LIKE '%cake';
+输出：
+```
+price
+20
+22
+15
+```
+输入：
+
+    SELECT price, kind from menu WHERE kind LIKE '%cake';
+输出：
+```
+price   kind
+20      milk_cake
+22      pink_rose_cake
+15      red_rose_cake
+```
+输入：
+
+    SELECT * from menu WHERE kind LIKE "milk%";
+输出：
+    price   cost    kind
+    20      8       milk_cake
+    15      5       milk_coffee
+输入：
+
+    SELECT price from menu WHERE kind LIKE "milk%";
+输出：
+```
+price
+20
+15
+```
+
+输入：
+
+    SELECT price, cost from menu WHERE kind LIKE "milk%";
+输出：
+```
+price   cost
+20      8
+15      5
+```
+输入：
+
+    SELECT * from menu WHERE kind LIKE '%rose%';
+输出：
+
+    price   cost    kind
+    22      10      pink_rose_cake
+    15      5       red_rose_cake
+输入：
+
+    SELECT price from menu WHERE kind LIKE '%rose%';
+输出：
+
+    price
+    22
+    15
+输入：
+
+    SELECT price, cost from menu WHERE kind LIKE '%rose%';
+输出：
+
+    price   cost
+    22      10
+    15      5  
+输入：
+
+    SELECT * from menu WHERE kind LIKE '_i';
+输出：
+
+    price   cost    kind
+    20      8       ki  
+输入：
+
+    SELECT price, kind from menu WHERE kind LIKE '_i';
+输出：
+
+    price   kind
+    20      ki
+输入：
+
+    SELECT price from menu WHERE kind LIKE 'k_';
+输出：
+
+    price
+    20
+输入：
+
+    SELECT price, kind from menu WHERE kind LIKE 'k_';
+输出：
+
+    price   kind
+    20      ki
+
+* 优点
+
+直接在```Parse.EXEC```函数体内```else if (ele1 == "SELECT")```的```where```分支调用的判断函数```TABLE:: Judge```函数内进行扩展，无需改动其它代码。
+
+实现了mysql中所有的模糊匹配形式：
+
+    '%a'     //以a结尾的数据
+	'a%'     //以a开头的数据
+	'%a%'    //含有a的数据
+	'_a_'    //三位且中间字母是a的
+	'_a'     //两位且结尾字母是a的
+	'a_'     //两位且开头字母是a的
+
+* 局限性
+
+从功能上来看是比较完整了，但是实现过程是通过```string```字符串的```find```和```substr```函数，大概会分支比较多，形式上会比较散，可能通过正则表达式进行模糊匹配会更加精妙。
+
+### 4.8、存档和读档
+* 设计思路
+
 此功能难度主要在于读档，要从零开始创建与原来完全相同的数据库和表，除了要在文件中储存数据之外，还需要储存表名、数据库名、列名、主键等关键信息。这些都是基础功能中写入文件这一功能的更高要求。
 
 因此，我们先利用
@@ -287,9 +650,10 @@ UNION语句用于连接两个表的SELECT语句句的结果组合到一个结果
 	index.txt 
 	[database_name].txt 
 	[databasename.tablename].txt 
-* index.txt为总目录，储存数据库数量以及每个数据库的名字；
-* 文件名如[database_name].txt的文件储存名为database_name的数据库的信息，包括表的数量以及每张表的名字；
-* 文件名如[database_name.table_name].txt的文件储存名为database_name的表中名为table_name的表的信息，包括列数、各列名称、各列数据类型、主键名字、每一列从第一行开始到最后一行的所有数据（每个单元格之间用'\t'分隔，每列之间用'\n'分隔）
+
+index.txt为总目录，储存数据库数量以及每个数据库的名字；
+文件名如[database_name].txt的文件储存名为database_name的数据库的信息，包括表的数量以及每张表的名字；
+文件名如[database_name.table_name].txt的文件储存名为database_name的表中名为table_name的表的信息，包括列数、各列名称、各列数据类型、主键名字、每一列从第一行开始到最后一行的所有数据（每个单元格之间用'\t'分隔，每列之间用'\n'分隔）
 
 例如：现有数据库oop，fop，oop下有两张表：class1，class2，fop下有两张表，class3，class4.
 则data文件夹里将会存在以下文件：
@@ -302,6 +666,7 @@ UNION语句用于连接两个表的SELECT语句句的结果组合到一个结果
 读档时，利用相关函数按照次序读档并建立数据库、建立表、添加列、加入数据。
 
 * 核心函数
+
 创建存档文件的函数：
 
 	void create_table_file(const std::string &dbname); //表(TABLE)类函数，存档
@@ -402,6 +767,7 @@ SAVE ALL;//对所有内容进行存档
 主要实现方式依赖于fstream类的相关函数
 
 * 存档文件示例和重新读档运行界面说明
+
 以以下测试代码为例（数据库附加功能测试/存档与读档1.sql）：
 
 ```
@@ -507,6 +873,7 @@ ijn.cba.txt内容如下（//之后的部分是标注说明，本来不存在于�
 读档后，数据库程序回到了关闭之前的状态，并可以进行与之前完全相同的操作
 
 * 优势：
+
 利用了之前的文件导入、导出函数进行改写；
 使用文件名标记对应储存的表，并使用分层结构，用index.txt为总目录，分层查找，减小了遗漏数据的可能性；
 按列存储，并在表文件中记录总行数，方便创建一列后马上输入数据，防止了多次更新"行数"的重复操作
@@ -514,15 +881,15 @@ ijn.cba.txt内容如下（//之后的部分是标注说明，本来不存在于�
 用户退出程序后，可以自行选择删除存档或是保留存档，增加了项目的灵活度；
 
 * 缺点：
+
 其实说是缺点，更多的是因为时间不允许而没有能够做到更好的遗憾吧
 
 首先，原本的设想是利用fstream类的读、写双接口将修改文件的复杂度降低至线性复杂度以下，但因为时间原因没有能够实现，改为使用分层做法尽可能优化；
-
 其次，对于创建文件夹这一命令，先后尝试了多种做法，包括<direct.h>中的mkdir函数、手动创建并拷贝路径、利用system()操纵shell等等，最终还是没有能够完全解决兼容性问题（mkdir函数在linux环境、windows环境下属于不同的库，system函数在检测到data文件夹时会在运行界面报出警告“data已存在”，虽然不影响运行但是不够美观）
 
 最后，对于文件读取的效率应该还有优化空间。
 
-### 4.7、向文件导入数据时支持whereclause
+### 4.9、向文件导入数据时支持whereclause
 
 * 我们支持在导出语句的后端增加whereclause语句。
 * 同时支持对任意指定列的输出,附加功能的实现得益于第一部分对原代码中select函数的修改。
@@ -561,7 +928,7 @@ ijn.cba.txt内容如下（//之后的部分是标注说明，本来不存在于�
 	4	
 	5	
 
-### 4.8、从文件导入信息的默认值填充处理
+### 4.10、从文件导入信息的默认值填充处理
 我们增加了对于导入信息不完整时的默认值填充处理，对没有输入的列默认用0（int类型）/0.0（double类型）/char(0)（char类型）填充：
 
 	if (col_name.size() != ColumnName.size())//如果命令输入的列数少于总列数
@@ -618,3 +985,105 @@ ijn.cba.txt内容如下（//之后的部分是标注说明，本来不存在于�
 	2018011343	a	0	
 	2018011344	b	0	
 	2018011345	c	0	
+
+### 4.11、支持对任意数量和顺序的列进行SELECT
+
+在实现多表whereclause时，我们发现有必要实现单表多列select，因此，我们添加了此附加功能
+实现思路非常简单，就是利用vector<string>储存列名，并对每一列进行输出
+测试代码如下：
+
+	CREATE DATABASE OOP;
+	USE OOP;
+	CREATE TABLE poi(lkj INT, mnb INT, bvc INT, dfj CHAR, PRIMARY KEY(mnb));
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (1, 2, 3, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (2, 3, 4, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (3, 4, 5, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (4, 5, 6, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (5, 6, 7, "c");
+	UPDATE poi SET dfj="b" WHERE lkj>3;
+	SELECT dfj, bvc from poi;
+	UPDATE poi SET dfj="b" WHERE lkj>3 OR mnb=2;
+	SELECT dfj, mnb from poi;
+	DROP DATABASE OOP;
+测试输出如下：
+	
+	dfj	bvc	
+	a	3	
+	a	4	
+	a	5	
+	b	6	
+	b	7	
+	dfj	mnb	
+	b	2	
+	a	3	
+	a	4	
+	b	5	
+	b	6	
+
+### 4.12、逻辑运算符用于whereclause
+为了增加重要的逻辑运算符的用使用范围，我们将逻辑运算符写入了whereclause子句
+
+* 实现思路
+
+1. 沿用第一阶段的队列结构（将要求值的表达式和操作符分开存放）
+在优先级上多做出一层考虑（将OR和XOR）进行并列
+2. 对于唯一的一元运算符NOT，我们将其放在字符串处理部分进行处理，如果读到NOT，则对之后的串进行处理，在处理结束算出bool结果后，对结果作not操作
+3. 利用优先级连、队列多次处理实现了多层（最多测试6层）逻辑运算符的叠加、混合
+
+测试样例为：
+
+	CREATE DATABASE OOP;
+	USE OOP;
+	CREATE TABLE poi(lkj INT, mnb INT, bvc INT, dfj CHAR, PRIMARY KEY(mnb));
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (1, 2, 3, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (2, 3, 4, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (3, 4, 5, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (4, 5, 6, "a");
+	INSERT INTO poi(lkj, mnb, bvc, dfj) VALUES (5, 6, 7, "a");
+	INSERT INTO poi(mnb, bvc, dfj) VALUES (7, 7, "a");
+	INSERT INTO poi(mnb, bvc, dfj) VALUES (8, 8, "b");
+	INSERT INTO poi(mnb) VALUES (9);
+	SELECT * from poi;
+	SELECT * FROM poi WHERE NOT bvc=3;
+	SELECT * FROM poi WHERE bvc=7 OR mnb=5 XOR lkj=5;
+	SELECT * FROM poi WHERE NOT NOT NOT NOT NOT dfj=a;
+	DROP DATABASE OOP;
+
+标准输出为：
+
+	lkj	mnb	bvc	dfj	
+	1	2	3	a	
+	2	3	4	a	
+	3	4	5	a	
+	4	5	6	a	
+	5	6	7	a	
+	NULL	7	7	a	
+	NULL	8	8	b	
+	NULL	9	NULL	NULL	
+	lkj	mnb	bvc	dfj	
+	2	3	4	a	
+	3	4	5	a	
+	4	5	6	a	
+	5	6	7	a	
+	NULL	7	7	a	
+	NULL	8	8	b	
+	NULL	9	NULL	NULL	
+	lkj	mnb	bvc	dfj	
+	4	5	6	a	
+	NULL	7	7	a	
+	lkj	mnb	bvc	dfj	
+	NULL	8	8	b	
+	NULL	9	NULL	NULL	
+
+* 主要优点
+
+1. 将一、二元运算符分别处理，最大程度利用了原有数据结构和处理方式
+
+2. 字符串处理沿用了一贯的字符串处理函数，只是对Judge函数进行了修改
+
+3. 支持单表的同时以极小的改动代价支持了多表
+
+* 存在不足
+
+没有对括号进行处理（主要思路是通过配对括号化为波兰表达式）
+
